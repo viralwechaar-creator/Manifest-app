@@ -67,12 +67,13 @@ export async function POST(req: NextRequest) {
       coachReply = await callCoach(systemPrompt, message);
     } catch (err) {
       if (err instanceof GeminiUnavailableError) {
+        console.error("Gemini unavailable:", err.message);
         const fallback = busyReply();
         await supabase.from("chat_messages").insert([
           { user_id: user.id, goal_id: activeGoal?.id || null, role: "user", content: message },
           { user_id: user.id, goal_id: activeGoal?.id || null, role: "assistant", content: fallback.reply, metadata: { error: true } }
         ]);
-        return NextResponse.json(fallback);
+        return NextResponse.json({ ...fallback, debug_error: err.message });
       }
       throw err;
     }

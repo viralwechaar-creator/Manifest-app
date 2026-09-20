@@ -12,6 +12,7 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(2);
+  const [menuOpen, setMenuOpen] = useState(false);
   const swiperRef = useRef<HTMLDivElement>(null);
   const data = useManifestData(userId);
 
@@ -29,10 +30,12 @@ export default function Home() {
   }, []);
 
   function goTo(i: number) {
-    setActiveIndex(i);
+    const clamped = Math.max(0, Math.min(PAGES.length - 1, i));
+    setActiveIndex(clamped);
+    setMenuOpen(false);
     const el = swiperRef.current;
     if (!el) return;
-    el.scrollTo({ left: el.clientWidth * i, behavior: "smooth" });
+    el.scrollTo({ left: el.clientWidth * clamped, behavior: "smooth" });
   }
 
   function onScroll() {
@@ -58,14 +61,22 @@ export default function Home() {
   }
 
   return (
-    <div className="app">
+    <div className={`app${menuOpen ? " menu-open" : ""}`}>
       {!data.online && <div className="offlinepill">Offline — changes will sync later</div>}
-      <div className="topbar">
-        <span className="wordmark">Manifest</span>
-        <span className="pill streakpill">{data.streak}d streak</span>
-      </div>
 
-      <div className="swiper" ref={swiperRef} onScroll={onScroll}>
+      <header className="topbar">
+        <span className="wordmark">Manifest</span>
+        <button
+          className="textbtn menupill"
+          aria-expanded={menuOpen}
+          aria-controls="menu"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          {menuOpen ? "Close" : "Menu"}
+        </button>
+      </header>
+
+      <main className="swiper" ref={swiperRef} onScroll={onScroll}>
         <IntakePage data={data} />
         <PlanPage data={data} />
         <DailyPage data={data} />
@@ -73,17 +84,38 @@ export default function Home() {
         <GratitudePage data={data} />
         <ProgressPage data={data} />
         <SettingsPage data={data} email={email} onSignOut={signOut} />
-      </div>
+      </main>
 
-      <div className="pager">
+      <footer className="pager">
+        <span>
+          {activeIndex + 1} / {PAGES.length}
+        </span>
         <div className="nav">
-          {PAGES.map((label, i) => (
-            <button key={label} className={i === activeIndex ? "active" : ""} onClick={() => goTo(i)}>
-              {label}
-            </button>
-          ))}
+          <button disabled={activeIndex === 0} onClick={() => goTo(activeIndex - 1)}>
+            Prev
+          </button>
+          <button disabled={activeIndex === PAGES.length - 1} onClick={() => goTo(activeIndex + 1)}>
+            Next
+          </button>
         </div>
-      </div>
+      </footer>
+
+      <nav className="menu" id="menu" aria-label="Sections" aria-hidden={!menuOpen}>
+        <ul>
+          {PAGES.map((label, i) => (
+            <li key={label}>
+              <button aria-current={i === activeIndex} onClick={() => goTo(i)}>
+                {label}
+                <span className="here" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="menu-foot">
+          <span>{data.streak}d streak</span>
+          <span>{new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+        </div>
+      </nav>
     </div>
   );
 }

@@ -31,6 +31,7 @@ function CoachReplyBubble({ reply }: { reply: PartialReply }) {
         <PrincipleLine key={i} p={p} />
       ))}
       {reply.follow_up_question && <p className="principle">{reply.follow_up_question}</p>}
+      {reply.debug_error && <p className="debug">Debug: {reply.debug_error}</p>}
     </div>
   );
 }
@@ -59,6 +60,17 @@ export function IntakePage({ data }: { data: DataApi }) {
   return (
     <section className="page">
       <h2 className="gap">Let's talk.</h2>
+      {log.length === 0 && !data.goal && (
+        <div className="firstrun">
+          <h3>Start here</h3>
+          <ol>
+            <li>Tell the coach your goal and what's going on.</li>
+            <li>Tick a few steps in Daily.</li>
+            <li>Add a gratitude.</li>
+          </ol>
+          <p className="muted" style={{ marginTop: 10 }}>Tap Menu, top right, to jump to any of the 7 pages.</p>
+        </div>
+      )}
       {log.length === 0 && (
         <p className="hint">
           Tell me what's going on and where you want to get to. I'll ask a couple of questions, then build you a real plan —
@@ -153,19 +165,17 @@ export function PlanPage({ data }: { data: DataApi }) {
 function StepRow({ step, data }: { step: Step; data: DataApi }) {
   const done = step.status === "done";
   return (
-    <div className="taskrow">
-      <label className="task">
-        <input type="checkbox" checked={done} onChange={() => data.toggleStep(step)} />
-        <span className="box" />
-        <span>
-          <span className="t">{step.title}</span>
-          <span className="meta">
-            {step.minutes ? `${step.minutes} min` : ""}
-            {step.done_when ? ` · done when: ${step.done_when}` : ""}
-          </span>
+    <label className={`task${done ? " done" : ""}`}>
+      <input type="checkbox" checked={done} onChange={() => data.toggleStep(step)} />
+      <span className="box" />
+      <span>
+        <span className="t">{step.title}</span>
+        <span className="meta">
+          {step.minutes ? `${step.minutes} min` : ""}
+          {step.done_when ? ` · done when: ${step.done_when}` : ""}
         </span>
-      </label>
-    </div>
+      </span>
+    </label>
   );
 }
 
@@ -381,7 +391,7 @@ export function GratitudePage({ data }: { data: DataApi }) {
       </div>
       {data.affirmations.length === 0 && <p className="empty" style={{ marginTop: 20 }}>None yet.</p>}
       {data.affirmations.map((entry) => (
-        <div className="entry" key={entry.id}>
+        <div className="aff" key={entry.id}>
           <span>{entry.text}</span>
           <button className="x" onClick={() => data.deleteAffirmation(entry.id)} aria-label="Remove">
             ×

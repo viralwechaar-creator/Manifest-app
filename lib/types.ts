@@ -115,4 +115,5 @@ export interface CoachReply {
   beliefs_detected: { belief: string; evidence: string; replacement: string; action: string }[];
   follow_up_question: string;
   safety_flag: boolean;
+  debug_error?: string;
 }
