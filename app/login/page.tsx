@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
@@ -9,6 +9,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const callbackError = params.get("error");
+    if (callbackError) {
+      setError(callbackError);
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
+
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -16,7 +25,7 @@ export default function LoginPage() {
     const supabase = supabaseBrowser();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined }
+      options: { emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined }
     });
     setBusy(false);
     if (error) setError(error.message);

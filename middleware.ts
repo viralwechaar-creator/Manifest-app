@@ -28,6 +28,11 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
+  const isAuthCallback = request.nextUrl.pathname.startsWith("/auth");
+
+  if (isAuthCallback) {
+    return response;
+  }
 
   if (!user && !isAuthRoute && !isApiRoute) {
     const url = request.nextUrl.clone();
