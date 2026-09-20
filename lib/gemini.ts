@@ -113,7 +113,12 @@ export async function callCoach(systemPrompt: string, userMessage: string): Prom
       continue;
     }
 
-    if (res.status === 503 || res.status === 429) {
+    if (res.status === 429) {
+      const text = await res.text();
+      throw new GeminiUnavailableError(`Gemini quota exceeded (429) — this is a free-tier daily/per-minute cap, not a transient error, so retrying won't help right now: ${text}`);
+    }
+
+    if (res.status === 503) {
       lastError = new Error(`Gemini ${res.status}: ${await res.text()}`);
       // eslint-disable-next-line no-await-in-loop
       await sleep(500 * attempt * attempt);
