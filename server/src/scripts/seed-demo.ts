@@ -8,6 +8,11 @@ import { migrate } from '../migrate';
 import { hashPassword } from '../lib/password';
 import { registerStudent } from '../modules/school/students';
 import { issueParentAccount, issueStudentAccount } from '../modules/school/family';
+import fs from 'fs';
+import path from 'path';
+import { sha256 } from '../lib/crypto';
+import { generateCharges, recordPayment } from '../modules/school/fees';
+import { PRIVATE_DIR } from '../modules/uploads';
 
 const FIRST_F = ['Aanya', 'Diya', 'Meera', 'Isha', 'Kavya', 'Riya', 'Saanvi', 'Anika', 'Tara', 'Nisha', 'Zoya', 'Pooja'];
 const FIRST_M = ['Aarav', 'Vihaan', 'Arjun', 'Kabir', 'Rohan', 'Ishaan', 'Dev', 'Yash', 'Neel', 'Rahul', 'Aditya', 'Samar'];
@@ -154,6 +159,47 @@ async function main() {
   await query("insert into leave_requests (staff_id, from_date, to_date, reason, status, decided_at) values ($1,$2,$2,'Medical appointment','approved', now())", [leaveT, mon]);
   await query("insert into staff_attendance (staff_id, date, status, note) values ($1,$2,'on_leave','Approved leave') on conflict do nothing", [leaveT, mon]);
   await query("insert into leave_requests (staff_id, from_date, to_date, reason) values ($1,$2,$3,'Family function')", [teachers[2].id, mon, mon]);
+  // ---- Phase 6 demo data: staff logins, fees, payments, refunds, expenses, applications ----
+  for (const [login, name, role] of [['accounts1', 'Sana Qureshi', 'accounts_staff'], ['admissions1', 'Kiran Mehta', 'admission_staff'], ['principal1', 'Dr. Latha Rao', 'principal']]) {
+    const u = (await query('insert into users (login_id, display_name, password_hash) values ($1::citext,$2,$3) returning id', [login, name, demoPw])).rows[0].id;
+    await query('insert into user_roles select $1, id from roles where code=$2', [u, role]);
+  }
+  const acct = (await query("select id from users where login_id='accounts1'")).rows[0].id as string;
+  const hTuition = (await query("insert into fee_heads (name) values ('Tuition') returning id")).rows[0].id, hAnnual = (await query("insert into fee_heads (name) values ('Annual charges') returning id")).rows[0].id, hExam = (await query("insert into fee_heads (name) values ('Examination') returning id")).rows[0].id;
+  await query("insert into fee_heads (name) values ('Transport'), ('Library')");
+  for (const [i, cid] of classIds.entries()) {
+    await query("insert into fee_structure_items (academic_year_id, class_id, head_id, amount, frequency, first_due_on) values ($1,$2,$3,$4,'monthly','2026-04-01')", [year, cid, hTuition, 1500 + 150 * i]);
+    await query("insert into fee_structure_items (academic_year_id, class_id, head_id, amount, frequency, first_due_on) values ($1,$2,$3,$4,'annual','2026-04-10')", [year, cid, hAnnual, 6000 + 500 * i]);
+    await query("insert into fee_structure_items (academic_year_id, class_id, head_id, amount, frequency, first_due_on) values ($1,$2,$3,$4,'quarterly','2026-06-01')", [year, cid, hExam, 800]);
+  }
+  await query("insert into concessions (student_id, head_id, academic_year_id, kind, value, reason) select s.id, $1, $2, 'percent', 25, 'Staff child concession' from students s where s.full_name like 'Aarav Menon'", [hTuition, year]);
+  await tx((c) => generateCharges(c, { yearId: year }));
+  const modes = ['cash', 'upi', 'cheque', 'bank_transfer', 'card'];
+  const payers = (await query("select s.id, s.student_code from students s where s.status='active' order by s.id")).rows;
+  for (const [i, st] of payers.entries()) {
+    const owed = (await query("select coalesce(sum(round(c.amount*100) + coalesce((select sum(round(a.amount*100)) from fee_adjustments a where a.charge_id=c.id),0)),0)::int t from fee_charges c where c.student_id=$1 and c.due_on <= '2026-09-30'", [st.id])).rows[0].t / 100;
+    const share = [1, 1, 0.8, 0.5, 0.3, 0][i % 6]; const amt = Math.floor(owed * share / 100) * 100; if (amt <= 0) continue;
+    const mode = modes[i % modes.length];
+    await tx((c) => recordPayment(c, { studentId: st.id, amount: amt, mode, reference: mode === 'cash' ? null : `TXN${100000 + i}`, paidOn: `2026-10-${String(1 + (i % 25)).padStart(2, '0')}`, source: 'counter', userId: acct }));
+  }
+  const firstPay = (await query("select id from payments order by id limit 1")).rows[0];
+  await query("insert into refunds (payment_id, amount, reason, requested_by) values ($1, 500, 'Fee paid twice by mistake', $2)", [firstPay.id, acct]);
+  for (const [cat, desc, amt] of [['Maintenance', 'Classroom repairs', 18500], ['Utilities', 'Electricity bill', 24300], ['Supplies', 'Stationery and lab consumables', 9200]] as const)
+    await query("insert into expenses (category, description, amount, spent_on, mode, recorded_by) values ($1,$2,$3,current_date - 5,'bank_transfer',$4)", [cat, desc, amt, acct]);
+  await query("insert into payment_claims (student_id, amount, mode, reference, paid_on, submitted_by) select $1, 1000, 'upi', 'UPI7788123', current_date - 1, u.id from users u where u.login_id=$2", [kidA.id, pl.loginId]);
+  // Two applications: one waiting for review, one approved and ready to enrol.
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(40)]);
+  fs.mkdirSync(path.join(PRIVATE_DIR, 'applications'), { recursive: true });
+  const mkApp = async (ref: string, name: string, status: string, docStatus: string, guardian: string, phone: string) => {
+    const a = (await query(`insert into applications (reference, tracking_hash, status, academic_year_id, class_id, student_name, date_of_birth, gender, address, guardian_name, guardian_relation, guardian_phone, guardian_email, consent_purpose, consent_notice_version, decision_note)
+      values ($1,$2,$3,$4,$5,$6,'2019-03-09','female','21 Demo Lane (fictional)',$7,'Mother',$8,'demo@example.com','Process the admission application','1',$9) returning id`, [ref, sha256('DEMOA-' + ref.slice(-5)), status, year, classIds[0], name, guardian, phone, status === 'approved' ? 'Your application has been approved.' : null])).rows[0].id;
+    for (const kind of ['birth_certificate', 'photo']) { const stored = `demo-${a}-${kind}.png`; fs.writeFileSync(path.join(PRIVATE_DIR, 'applications', stored), png); await query('insert into application_documents (application_id, kind, original_name, stored_name, mime, size_bytes, status) values ($1,$2,$3,$4,$5,$6,$7)', [a, kind, `${kind}.png`, stored, 'image/png', png.length, docStatus]); }
+    await query("insert into application_events (application_id, actor, action) values ($1,'applicant','submitted')", [a]); return a;
+  };
+  await query("insert into application_counters (year, last_number) values (2026, 2) on conflict (year) do update set last_number = 2");
+  await mkApp('APP-2026-0001', 'Ira Kapoor', 'submitted', 'pending', 'Neha Kapoor', '9833300001');
+  await mkApp('APP-2026-0002', 'Zara Ahmed', 'approved', 'verified', 'Sara Ahmed', '9833300002');
+  console.log('Finance demo logins: accounts1 (accounts), admissions1 (admissions), principal1 (principal), password Demo-Pass-2026. Applications: APP-2026-0001 (tracking code DEMOA-00001) and APP-2026-0002 (DEMOA-00002, approved, ready to enrol).');
   console.log(`Demo data ready: 8 classes, ${sections.length} sections, ${teachers.length + 4} staff, ${count} students.`);
   console.log('Demo teacher logins: teacher1, teacher2, teacher3  |  password: Demo-Pass-2026');
   console.log('Unit Test 1 (published) and a class test have marks; next Monday has an open vacant period.');

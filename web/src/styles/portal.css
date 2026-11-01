@@ -201,3 +201,5 @@ a.hrow:hover { background: var(--olive-soft); }
 
 @media (max-width: 560px) { .fam-brand { display: none; } }
 button, a { -webkit-tap-highlight-color: transparent; }
+.receipt { min-width: min(520px, 80vw); } .receipt .rc-head { margin-bottom: .6rem; }
+@media print { .scrim { position: static; background: none; padding: 0; } .modal { box-shadow: none; max-height: none; padding: 0; } .receipt { min-width: 0; } }

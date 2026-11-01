@@ -6,7 +6,8 @@ import { SiteLayout } from './site/SiteLayout';
 import { AlbumPage, CalendarPage, EventsPage, GalleryPage } from './site/EventsGallery';
 import { ContactPage, EnquiryPage, NotFound } from './site/Forms';
 import { AchievementsPage, AlumniPage, CareersPage, CurriculumPage, DepartmentsPage, DocumentsPage, FacultyPage, NewsDetail, NewsPage } from './site/Lists';
-import { ApplyPage, PoliciesPage, PrincipalPage, TextPage, VisionMissionPage } from './site/TextPages';
+import { ApplyPage, TrackPage } from './site/Admission';
+import { PoliciesPage, PrincipalPage, TextPage, VisionMissionPage } from './site/TextPages';
 
 const Portal = lazy(() => import('./portal/PortalRoutes'));
 const Family = lazy(() => import('./family/FamilyRoutes'));
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="admissions" element={<TextPage slug="admissions" />} />
           <Route path="admissions/enquiry" element={<EnquiryPage />} />
           <Route path="admissions/apply" element={<ApplyPage />} />
+          <Route path="admissions/track" element={<TrackPage />} />
           <Route path="gallery" element={<GalleryPage />} />
           <Route path="gallery/:id" element={<AlbumPage />} />
           <Route path="events" element={<EventsPage />} />

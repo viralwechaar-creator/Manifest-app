@@ -49,6 +49,9 @@ export function PortalLayout() {
         {(can('leave.apply') || can('substitutions.manage')) && <h5>Staff</h5>}
         {can('leave.apply') && link('/portal/leave', 'Leave')}
         {can('substitutions.manage') && link('/portal/substitutions', 'Substitutions')}
+        {(can('admissions.review') || can('admissions.view') || can('fees.view') || can('expenses.manage')) && <h5>Admissions & fees</h5>}
+        {(can('admissions.review') || can('admissions.view')) && link('/portal/admissions', 'Admission applications')}
+        {(can('fees.view') || can('expenses.manage')) && link('/portal/finance', 'Fees & accounts')}
         {can('enquiries.manage') && <><h5>Inbox</h5>{link('/portal/inbox/enquiries', 'Admission enquiries')}{link('/portal/inbox/messages', 'Contact messages')}</>}
         {can('cms.manage') && Object.entries(groups).map(([g, items]) => <div key={g}><h5>{g === 'Pages' ? 'Website' : g}</h5>{items.map((e) => link(`/portal/content/${e.key}`, e.label))}</div>)}
         {can('settings.manage') && <><h5>Website</h5>{link('/portal/settings', 'Site settings')}</>}

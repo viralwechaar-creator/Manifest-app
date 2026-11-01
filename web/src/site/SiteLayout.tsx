@@ -13,7 +13,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     { to: '/departments', label: 'Departments' }, { to: '/faculty', label: 'Faculty' }] },
   { label: 'Admissions', items: [
     { to: '/admissions', label: 'How to join' }, { to: '/admissions/enquiry', label: 'Admission enquiry' },
-    { to: '/admissions/apply', label: 'Online admission' }, { to: '/transport', label: 'Transport' }] },
+    { to: '/admissions/apply', label: 'Online admission' }, { to: '/admissions/track', label: 'Track application' }, { to: '/transport', label: 'Transport' }] },
   { label: 'Campus life', items: [
     { to: '/gallery', label: 'Gallery' }, { to: '/events', label: 'Events' }, { to: '/achievements', label: 'Achievements' },
     { to: '/calendar', label: 'Calendar' }, { to: '/alumni', label: 'Alumni' }] },

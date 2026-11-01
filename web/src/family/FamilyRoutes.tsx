@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { AccountPage } from '../portal/Admin';
-import { FamilyAttendance, FamilyHome, FamilyHomework, FamilyLayout, FamilyLeave, FamilyMore, FamilyNotices, FamilyRemarks, FamilyResults, FamilyTimetable } from './Family';
+import { FamilyAttendance, FamilyFees, FamilyHome, FamilyHomework, FamilyLayout, FamilyLeave, FamilyMore, FamilyNotices, FamilyRemarks, FamilyResults, FamilyTimetable } from './Family';
 
 export default function FamilyRoutes() {
   return (
@@ -10,6 +10,7 @@ export default function FamilyRoutes() {
         <Route path="attendance" element={<FamilyAttendance />} />
         <Route path="results" element={<FamilyResults />} />
         <Route path="homework" element={<FamilyHomework />} />
+        <Route path="fees" element={<FamilyFees />} />
         <Route path="more" element={<FamilyMore />} />
         <Route path="timetable" element={<FamilyTimetable />} />
         <Route path="remarks" element={<FamilyRemarks />} />

@@ -87,18 +87,4 @@ export function PoliciesPage() {
   );
 }
 
-export function ApplyPage() {
-  const p = usePage('admissions');
-  return (
-    <>
-      <PageHead eyebrow="Admissions" title="Online admission" crumbs={[['Admissions', '/admissions'], ['Online admission']]}
-        intro="Online applications with document upload and tracking are being added to this website. Until then, begin with an enquiry and the admissions team will guide you through the next steps." />
-      <section className="section"><div className="wrap" style={{ maxWidth: 760 }}>
-        <Reveal><Prose text={p.data?.body} /></Reveal>
-        <p style={{ marginTop: '2rem' }}><Link className="btn" to="/admissions/enquiry">Send an admission enquiry</Link></p>
-      </div></section>
-    </>
-  );
-}
-
 export { Async, fmtDate };

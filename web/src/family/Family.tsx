@@ -10,6 +10,7 @@ import { fmtDate } from '../lib';
 import { Bell } from '../portal/Bell';
 import { clearSchemaCache } from '../portal/schema';
 import { useApi } from '../portal/ui';
+import { inr, MODE, Receipt } from '../portal/Receipt';
 import { useSettings } from '../site/SiteData';
 
 interface Child { id: number; student_code: string; full_name: string; status: string; section: string | null; section_id: number | null }
@@ -51,6 +52,12 @@ export function FamilyLayout() {
   );
 }
 
+function FeesTile({ childId }: { childId: number }) {
+  const { data } = useApi<any>(`/family/children/${childId}/fees`, [childId]);
+  if (!data) return null; const t = data.totals;
+  return (<Link to="/family/fees" className="panel soft" style={{ textDecoration: 'none', display: 'block' }}><h2>Fees</h2>{t.balance > 0 ? <p style={{ margin: 0 }}><b style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 400 }}>{inr(t.balance)}</b> to pay{t.overdue > 0 && <span className="err" style={{ marginLeft: '.6rem' }}>{inr(t.overdue)} overdue</span>}{t.nextDue && t.overdue === 0 && <span className="muted"> · next due {fmtDate(t.nextDue)}</span>}</p> : <p style={{ margin: 0 }}>{data.dues.length ? 'All fees are paid. Thank you.' : 'No fees have been raised yet.'}</p>}<span className="link-arrow" style={{ marginTop: '.6rem' }}>View fees and receipts →</span></Link>);
+}
+
 const chip = (s: string | null) => s ? <span className={'fchip ' + s}>{s}</span> : <span className="fchip none">not marked yet</span>;
 const dayName = (v: string) => fmtDate(v, { weekday: 'short', day: 'numeric', month: 'short' });
 
@@ -71,7 +78,7 @@ export function FamilyHome() {
     </div>
     <div className="panel"><h2>Notices</h2>{!notices.data ? <Loading /> : notices.data.length === 0 ? <p className="muted">No notices right now.</p> : notices.data.slice(0, 3).map((n) => <div key={n.id} className="fam-row"><b>{n.title}</b><span className="muted">{fmtDate(n.published_at)}</span><p style={{ margin: '.2rem 0 0' }}>{n.body.slice(0, 140)}{n.body.length > 140 && '…'}</p></div>)}<Link className="link-arrow" to="/family/notices">All notices & events →</Link></div>
     {events.data && events.data.length > 0 && <div className="panel"><h2>Coming up</h2>{events.data.slice(0, 3).map((e) => <div key={e.id} className="fam-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}><span><b>{e.title}</b><br /><span className="muted" style={{ fontSize: '.82rem' }}>{e.location}</span></span><span className="muted">{fmtDate(e.starts_at, { day: 'numeric', month: 'short' })}</span></div>)}</div>}
-    <div className="panel soft"><h2>Fees and transport</h2><p className="muted" style={{ margin: 0 }}>Fee details, online payment and transport information will appear here in an upcoming update.</p></div>
+    <FeesTile childId={child.id} />
   </div>);
 }
 
@@ -128,7 +135,7 @@ export function FamilyHomework() {
 
 export function FamilyMore() {
   const { role } = useChild();
-  const items: [string, string, string][] = [['/family/timetable', 'Class timetable', 'Weekly periods and teachers'], ['/family/remarks', 'Teacher remarks', 'Praise and notes from teachers'], ['/family/notices', 'Notices & events', 'News from the school'], ...(role === 'parent' ? [['/family/leave', 'Apply for leave', 'Tell the school about an absence'] as [string, string, string]] : []), ['/family/account', 'My account', 'Password and two-step verification']];
+  const items: [string, string, string][] = [['/family/fees', 'Fees & receipts', 'Dues, payments and receipts'], ['/family/timetable', 'Class timetable', 'Weekly periods and teachers'], ['/family/remarks', 'Teacher remarks', 'Praise and notes from teachers'], ['/family/notices', 'Notices & events', 'News from the school'], ...(role === 'parent' ? [['/family/leave', 'Apply for leave', 'Tell the school about an absence'] as [string, string, string]] : []), ['/family/account', 'My account', 'Password and two-step verification']];
   return (<div className="stack"><h1 className="fam-h">More</h1>{items.map(([to, t, d]) => <Link key={to} to={to} className="fam-link"><span><b>{t}</b><br /><span className="muted" style={{ fontSize: '.85rem' }}>{d}</span></span><span aria-hidden>→</span></Link>)}<SignOut /></div>);
 }
 function SignOut() { const { signOut } = useAuth(); const nav = useNavigate(); return <button className="btn ghost" onClick={async () => { clearSchemaCache(); await signOut(); nav('/login'); }}>Sign out</button>; }
@@ -158,4 +165,25 @@ export function FamilyLeave() {
       <div className="two-col"><div className="field"><label htmlFor="fl1">From</label><input id="fl1" type="date" min={t} value={f.fromDate} onChange={(e) => setF({ ...f, fromDate: e.target.value, toDate: e.target.value > f.toDate ? e.target.value : f.toDate })} /></div><div className="field"><label htmlFor="fl2">To</label><input id="fl2" type="date" min={f.fromDate} value={f.toDate} onChange={(e) => setF({ ...f, toDate: e.target.value })} /></div></div>
       <div className="field"><label htmlFor="fl3">Reason</label><textarea id="fl3" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} /></div><button className="btn">Send request</button></form> : <div className="notice">Leave is requested by a parent.</div>}
     <div className="panel"><h2>Requests</h2>{!data ? <Loading /> : data.length === 0 ? <p className="muted">No requests yet.</p> : data.map((l) => <div className="fam-row" key={l.id}><div className="flex" style={{ justifyContent: 'space-between' }}><b>{dayName(String(l.from_date).slice(0, 10))}{String(l.from_date).slice(0, 10) !== String(l.to_date).slice(0, 10) && <> – {dayName(String(l.to_date).slice(0, 10))}</>}</b><span className={'badge ' + (l.status === 'approved' ? 'on' : l.status === 'pending' ? 'new' : 'off')}>{l.status}</span></div><span className="muted">{l.reason}</span>{l.decision_note && <div className="muted" style={{ fontSize: '.82rem' }}>Teacher: {l.decision_note}</div>}{l.status === 'pending' && role === 'parent' && <button className="btn ghost sm" style={{ marginTop: '.4rem' }} onClick={async () => { await api(`/family/children/${child.id}/leave/${l.id}/cancel`, { method: 'POST' }); reload(); }}>Cancel request</button>}</div>)}</div></div>);
+}
+
+export function FamilyFees() {
+  const { child, role } = useChild(); const { data, err, reload } = useApi<any>(`/family/children/${child.id}/fees`, [child.id]);
+  const [rc, setRc] = useState<number | null>(null); const [open, setOpen] = useState(false); const t = new Date().toISOString().slice(0, 10);
+  const [f, setF] = useState<any>({ amount: '', mode: 'upi', reference: '', paidOn: t, note: '' }); const [ferr, setFerr] = useState<ApiError | null>(null); const [ok, setOk] = useState(false);
+  if (err) return <ErrorBox message={err} />; if (!data) return <Loading />;
+  const tot = data.totals; const need = ['cheque', 'upi', 'bank_transfer', 'card', 'online'].includes(f.mode);
+  return (<div className="stack"><h1 className="fam-h">Fees</h1>
+    <div className="fam-hero"><div className="eyebrow" style={{ color: 'var(--sand)' }}>{child.full_name}</div><h1 style={{ fontSize: '2.6rem' }}>{inr(tot.balance)}</h1><p>{tot.balance > 0 ? 'to pay' : 'nothing to pay'}{tot.overdue > 0 && <> · <b>{inr(tot.overdue)} overdue</b></>}</p></div>
+    {ok && <div className="notice ok" role="status">Thank you. The school will confirm your payment and issue a receipt.</div>}
+    {role === 'parent' && tot.balance > 0 && <button className="btn" onClick={() => { setFerr(null); setOk(false); setF({ amount: String(tot.balance), mode: 'upi', reference: '', paidOn: t, note: '' }); setOpen(true); }}>I have paid</button>}
+    <div className="panel soft"><h2>How to pay</h2><p style={{ margin: 0, whiteSpace: 'pre-line' }}>{data.instructions || 'Please contact the school office for payment options.'}</p><p className="muted" style={{ fontSize: '.82rem', margin: '.6rem 0 0' }}>You can pay in any way the school accepts. After paying, tap “I have paid” so we can match it and send your receipt.</p></div>
+    <div className="panel"><h2>Fees</h2>{data.dues.length === 0 ? <p className="muted">No fees have been raised yet.</p> : data.dues.map((d: any) => <div className="fam-row" key={d.id}><div className="flex" style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}><span><b>{d.description}</b><br /><span className={d.overdue ? 'err' : 'muted'} style={{ fontSize: '.82rem' }}>due {fmtDate(d.dueOn)}{d.overdue ? ' · overdue' : ''}</span></span><span style={{ textAlign: 'right' }}>{d.balance > 0 ? <b>{inr(d.balance)}</b> : <span className="badge on">paid</span>}{d.adjustments < 0 && <div className="muted" style={{ fontSize: '.75rem' }}>discount {inr(-d.adjustments)}</div>}</span></div></div>)}</div>
+    {data.claims.some((c: any) => c.status !== 'accepted') && <div className="panel"><h2>Payments you told us about</h2>{data.claims.filter((c: any) => c.status !== 'accepted').map((c: any) => <div className="fam-row" key={c.id}><div className="flex" style={{ justifyContent: 'space-between' }}><span><b>{inr(c.amount)}</b> <span className="muted">{MODE[c.mode]} · {fmtDate(c.paid_on)}</span></span><span className={'badge ' + (c.status === 'pending' ? 'new' : 'off')}>{c.status === 'pending' ? 'being checked' : 'not matched'}</span></div>{c.decision_note && <span className="muted" style={{ fontSize: '.82rem' }}>{c.decision_note}</span>}</div>)}</div>}
+    <div className="panel"><h2>Receipts</h2>{data.payments.length === 0 ? <p className="muted">No payments yet.</p> : data.payments.map((p: any) => <button key={p.id} className="fam-row" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', background: 'none', border: 0, borderTop: '1px solid var(--line)', textAlign: 'left', cursor: 'pointer' }} onClick={() => setRc(p.id)}><span><b>{inr(p.amount)}</b> <span className="muted">{MODE[p.mode]} · {fmtDate(p.paid_on)}</span></span><code>{p.receipt_no}</code></button>)}</div>
+    <Modal open={rc !== null} onClose={() => setRc(null)} label="Receipt">{rc !== null && <Receipt path={`/family/children/${child.id}/receipts/${rc}`} />}</Modal>
+    <Modal open={open} onClose={() => setOpen(false)} label="I have paid"><h3>Tell us about your payment</h3><p className="muted" style={{ fontSize: '.88rem' }}>Paid online, at the office, by cheque or transfer? Enter the details and the school will confirm.</p>{ferr && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{ferr.message}</div>}
+      <div className="two-col"><div className="field"><label htmlFor="cl1">Amount (₹)</label><input id="cl1" type="number" step="0.01" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></div><div className="field"><label htmlFor="cl2">Paid by</label><select id="cl2" value={f.mode} onChange={(e) => setF({ ...f, mode: e.target.value })}>{Object.entries(MODE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+        <div className="field"><label htmlFor="cl3">{need ? 'Transaction / cheque number *' : 'Reference (optional)'}</label><input id="cl3" type="text" value={f.reference} onChange={(e) => setF({ ...f, reference: e.target.value })} /></div><div className="field"><label htmlFor="cl4">Date paid</label><input id="cl4" type="date" max={t} value={f.paidOn} onChange={(e) => setF({ ...f, paidOn: e.target.value })} /></div></div>
+      <div className="flex"><button className="btn" onClick={async () => { setFerr(null); try { await api(`/family/children/${child.id}/claims`, { method: 'POST', body: { amount: Number(f.amount), mode: f.mode, reference: f.reference || undefined, paidOn: f.paidOn } }); setOpen(false); setOk(true); reload(); } catch (e) { setFerr(e as ApiError); } }}>Send</button><button className="btn ghost" onClick={() => setOpen(false)}>Cancel</button></div></Modal></div>);
 }
