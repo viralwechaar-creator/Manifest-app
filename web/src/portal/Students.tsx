@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Tabs } from '../components/Tabs';
 import { dt, Pager, Select, useApi, usePaged } from './ui';
+import { AccessPanel, RemarksPanel } from './Communication';
 
 const STATUS = ['active', 'transferred', 'withdrawn', 'alumni', 'suspended'];
 
@@ -63,7 +64,7 @@ export function StudentForm() {
   const sections = useApi<any[]>('/admin/school/sections');
   const existing = useApi<any>(isNew ? null : `/admin/school/students/${id}`);
   const [f, setF] = useState<any>(null); const [gs, setGs] = useState<any[]>([{ ...blankG, isPrimary: true }]);
-  const [err, setErr] = useState<ApiError | null>(null); const [busy, setBusy] = useState(false); const [done, setDone] = useState<{ code: string; id: number } | null>(null);
+  const [err, setErr] = useState<ApiError | null>(null); const [busy, setBusy] = useState(false); const [done, setDone] = useState<{ code: string; id: number; parentLogin?: any } | null>(null); const [issue, setIssue] = useState(true); const { can } = useAuth();
   useEffect(() => {
     if (isNew) setF({ fullName: '', dateOfBirth: '', gender: 'female', sectionId: '', admissionDate: new Date().toISOString().slice(0, 10), address: '', healthNotes: '' });
     else if (existing.data) { const d = existing.data; setF({ fullName: d.full_name, dateOfBirth: String(d.date_of_birth).slice(0, 10), gender: d.gender, sectionId: d.section_id ?? '', address: d.address ?? '', healthNotes: d.health_notes ?? '' }); setGs((d.guardians ?? []).map((g: any) => ({ fullName: g.full_name, relation: g.relation, phone: g.phone ?? '', email: g.email ?? '', isPrimary: g.is_primary }))); }
@@ -76,13 +77,13 @@ export function StudentForm() {
     const body: any = { fullName: f.fullName, dateOfBirth: f.dateOfBirth, gender: f.gender, sectionId: f.sectionId ? Number(f.sectionId) : null, address: f.address, healthNotes: f.healthNotes };
     const guardians = gs.filter((g) => g.fullName || g.phone).map((g) => ({ ...g, email: g.email || '' }));
     try {
-      if (isNew) { const r = await api('/admin/school/students', { method: 'POST', body: { ...body, admissionDate: f.admissionDate, guardians } }); setDone({ code: r.studentCode, id: r.id }); }
+      if (isNew) { const r = await api('/admin/school/students', { method: 'POST', body: { ...body, admissionDate: f.admissionDate, guardians, issueParentLogin: issue && can('family_accounts.manage') } }); setDone({ code: r.studentCode, id: r.id, parentLogin: r.parentLogin }); }
       else { await api(`/admin/school/students/${id}`, { method: 'PATCH', body }); await api(`/admin/school/students/${id}/guardians`, { method: 'PUT', body: { guardians } }); nav(`/portal/students/${id}`); }
     } catch (x) { setErr(x as ApiError); } finally { setBusy(false); }
   }
   if (done) return (<><div className="ph1"><h1>Student registered</h1></div><div className="panel" style={{ maxWidth: 560 }}>
     <p>The student ID has been issued:</p><p><code style={{ fontSize: '2rem', background: 'var(--olive-soft)', padding: '.4rem 1rem', borderRadius: 14 }}>{done.code}</code></p>
-    <p className="muted">The parent portal login is created in a later phase; this ID will be the parent's username.</p>
+    {done.parentLogin ? <div className="notice" style={{ margin: '1rem 0' }}><b>Parent login</b><p style={{ margin: '.3rem 0' }}>Username: <code>{done.parentLogin.loginId}</code></p>{done.parentLogin.temporaryPassword ? <p style={{ margin: 0 }}>Temporary password (shown once): <code style={{ fontSize: '1.2rem', userSelect: 'all' }}>{done.parentLogin.temporaryPassword}</code></p> : <p className="muted" style={{ margin: 0 }}>This parent already has an account; they can also sign in with this ID.</p>}</div> : <p className="muted">This ID is the parent's username. Create their login from the student's Portal access tab.</p>}
     <div className="flex"><button className="btn" onClick={() => nav(`/portal/students/${done.id}`)}>Open profile</button><button className="btn ghost" onClick={() => window.location.assign('/portal/students/new')}>Register another</button></div></div></>);
   return (
     <>
@@ -116,6 +117,7 @@ export function StudentForm() {
             </div>))}
           {gs.length < 4 && <button type="button" className="btn ghost sm" style={{ marginTop: '1rem' }} onClick={() => setGs([...gs, { ...blankG, relation: 'Mother' }])}>+ Add another guardian</button>}
         </div>
+        {isNew && can('family_accounts.manage') && <label className="check"><input type="checkbox" checked={issue} onChange={(e) => setIssue(e.target.checked)} /><span>Also create the parent's portal login (username is the student ID)</span></label>}
         <div className="flex"><button className="btn" disabled={busy}>{busy ? 'Saving…' : isNew ? 'Register and issue ID' : 'Save changes'}</button></div>
       </form>
     </>
@@ -125,7 +127,7 @@ export function StudentForm() {
 export function StudentDetail() {
   const { id } = useParams(); const nav = useNavigate(); const { can } = useAuth();
   const { data: s, err, reload } = useApi<any>(`/admin/school/students/${id}`);
-  const [tab, setTab] = useState<'profile' | 'guardians' | 'history'>('profile');
+  const [tab, setTab] = useState<'profile' | 'guardians' | 'history' | 'remarks' | 'access'>('profile');
   const [stat, setStat] = useState(false); const [ns, setNs] = useState('withdrawn'); const [reason, setReason] = useState(''); const [serr, setSerr] = useState(''); const [busy, setBusy] = useState(false);
   const age = useMemo(() => (s ? Math.floor((Date.now() - new Date(s.date_of_birth).getTime()) / 31557600000) : 0), [s]);
   if (err) return <><ErrorBox message={err} /><button className="btn ghost" onClick={() => nav('/portal/students')}>← Back</button></>;
@@ -135,13 +137,15 @@ export function StudentDetail() {
       <div className="ph1"><div><div className="muted" style={{ fontFamily: 'var(--font-mono)', fontSize: '.8rem' }}>{s.student_code}</div><h1>{s.full_name}</h1></div>
         <div className="flex"><button className="btn ghost" onClick={() => nav('/portal/students')}>← Students</button>{can('students.manage') && <><button className="btn ghost" onClick={() => nav(`/portal/students/${id}/edit`)}>Edit</button><button className="btn ghost" onClick={() => { setNs(s.status === 'active' ? 'withdrawn' : 'active'); setStat(true); }}>Change status</button></>}</div></div>
       <div className="kpis"><div className="kpi"><b style={{ fontSize: '1.6rem' }}>{s.class_name ? `${s.class_name} ${s.section_name}` : '—'}</b><span>Class</span></div><div className="kpi"><b style={{ fontSize: '1.6rem' }}>{age}</b><span>Age</span></div><div className="kpi"><b style={{ fontSize: '1.6rem' }}><span className={'badge ' + (s.status === 'active' ? 'on' : 'off')}>{s.status}</span></b><span>Status</span></div><div className="kpi"><b style={{ fontSize: '1.6rem' }}>{dt(s.admission_date)}</b><span>Admitted</span></div></div>
-      <Tabs tabs={[{ id: 'profile', label: 'Profile' }, { id: 'guardians', label: 'Parents & guardians' }, { id: 'history', label: 'History' }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ id: 'profile', label: 'Profile' }, { id: 'guardians', label: 'Parents & guardians' }, { id: 'history', label: 'History' }, { id: 'remarks', label: 'Remarks' }, ...(can('family_accounts.manage') ? [{ id: 'access' as const, label: 'Portal access' }] : [])]} value={tab} onChange={setTab} />
       {tab === 'profile' && <div className="panel"><dl className="kv"><dt>Date of birth</dt><dd>{dt(s.date_of_birth)}</dd><dt>Gender</dt><dd>{s.gender}</dd>
         {'address' in s ? <><dt>Address</dt><dd>{s.address || '—'}</dd><dt>Health notes</dt><dd>{s.health_notes || '—'}</dd></> : <><dt>Address, health</dt><dd className="muted">Hidden: you do not have access to sensitive details.</dd></>}</dl></div>}
       {tab === 'guardians' && <div className="stack">{s.guardians.length === 0 && <Empty>No guardians recorded.</Empty>}{s.guardians.map((g: any) => <div className="panel" key={g.id}><b>{g.full_name}</b> <span className="chip sage">{g.relation}{g.is_primary ? ' · primary' : ''}</span>{g.phone ? <dl className="kv" style={{ marginTop: '.6rem' }}><dt>Phone</dt><dd><a href={`tel:${g.phone}`}>{g.phone}</a></dd>{g.email && <><dt>Email</dt><dd>{g.email}</dd></>}</dl> : <p className="muted" style={{ margin: '.5rem 0 0' }}>Contact details hidden.</p>}</div>)}</div>}
       {tab === 'history' && <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}>
         <div className="panel"><h2>Classes by year</h2>{s.history.length === 0 ? <p className="muted">No class history yet.</p> : <table className="tbl" style={{ minWidth: 0 }}><tbody>{s.history.map((h: any) => <tr key={h.academic_year_id}><td><b>{h.year}</b></td><td>{h.section}</td><td>{h.outcome ?? 'current'}</td></tr>)}</tbody></table>}</div>
         <div className="panel"><h2>Status log</h2><table className="tbl" style={{ minWidth: 0 }}><tbody>{s.statusLog.map((l: any, i: number) => <tr key={i}><td>{dt(l.changed_at)}</td><td><b>{l.new_status}</b></td><td>{l.reason}{l.by ? ` · ${l.by}` : ''}</td></tr>)}</tbody></table></div></div>}
+      {tab === 'remarks' && <RemarksPanel studentId={s.id} />}
+      {tab === 'access' && <AccessPanel studentId={s.id} />}
       <Modal open={stat} onClose={() => setStat(false)} label="Change status">
         <h3>Change status</h3>
         {serr && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{serr}</div>}

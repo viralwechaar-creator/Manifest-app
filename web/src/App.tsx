@@ -9,6 +9,7 @@ import { AchievementsPage, AlumniPage, CareersPage, CurriculumPage, DepartmentsP
 import { ApplyPage, PoliciesPage, PrincipalPage, TextPage, VisionMissionPage } from './site/TextPages';
 
 const Portal = lazy(() => import('./portal/PortalRoutes'));
+const Family = lazy(() => import('./family/FamilyRoutes'));
 const Login = lazy(() => import('./portal/Login').then((m) => ({ default: m.Login })));
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
         </Route>
         <Route path="login" element={<Login />} />
         <Route path="portal/*" element={<Portal />} />
+        <Route path="family/*" element={<Family />} />
         <Route path="admin" element={<Navigate to="/login" replace />} />
       </Routes>
     </Suspense>

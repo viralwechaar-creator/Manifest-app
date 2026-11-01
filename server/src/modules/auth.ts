@@ -12,7 +12,7 @@ import { asyncH, HttpError } from '../middleware/errors';
 
 export const authRouter = Router();
 
-const loginLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 30, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many attempts. Try again later.' } });
+const loginLimiter = rateLimit({ windowMs: 15 * 60_000, limit: config.LOGIN_RATE_LIMIT, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many attempts. Try again later.' } });
 const MAX_FAILS = 5;
 const LOCK_MIN = 15;
 
@@ -30,7 +30,10 @@ const loginBody = z.object({
 
 authRouter.post('/login', loginLimiter, asyncH(async (req, res) => {
   const body = loginBody.parse(req.body);
-  const r = await query('select * from users where login_id = $1', [body.loginId]);
+  // A parent can sign in with any linked child's student ID (stored as an alias of one account).
+  const r = await query(
+    `select * from (select u.* from users u where u.login_id = $1
+                    union all select u.* from users u join login_aliases a on a.user_id = u.id where a.login_id = $1) x limit 1`, [body.loginId]);
   const u = r.rows[0];
   const ok = await verifyPassword(body.password, u?.password_hash ?? DUMMY_HASH);
   const generic = new HttpError(401, 'Incorrect login ID or password.');

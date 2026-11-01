@@ -11,6 +11,7 @@ const schema = z.object({
   SESSION_IDLE_MINUTES: z.coerce.number().default(120),
   STORAGE_DIR: z.string().default('./storage'),
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
+  LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(30), // sign-in attempts per IP per 15 minutes
 });
 
 const parsed = schema.safeParse(process.env);

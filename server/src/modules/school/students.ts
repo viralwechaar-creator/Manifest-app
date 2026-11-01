@@ -6,6 +6,7 @@ import { audit } from '../../lib/audit';
 import { requirePermission } from '../../middleware/auth';
 import { asyncH, HttpError } from '../../middleware/errors';
 import { nextStudentCode } from './studentId';
+import { issueParentAccount } from './family';
 
 export const studentsRouter = Router();
 const view = requirePermission('students.view');
@@ -109,8 +110,9 @@ export async function registerStudent(c: PoolClient, b: z.infer<typeof studentBo
 }
 
 studentsRouter.post('/', manage, asyncH(async (req, res) => {
-  const b = studentBody.extend({ guardians: z.array(guardian).min(1, 'Add at least one parent or guardian').max(4) }).parse(req.body);
-  const out = await tx((c) => registerStudent(c, b));
+  const b = studentBody.extend({ guardians: z.array(guardian).min(1, 'Add at least one parent or guardian').max(4), issueParentLogin: z.boolean().optional() }).parse(req.body);
+  if (b.issueParentLogin && !req.auth!.permissions.includes('family_accounts.manage')) throw new HttpError(403, 'You cannot create parent logins.');
+  const out = await tx(async (c) => { const r = await registerStudent(c, b); return b.issueParentLogin ? { ...r, parentLogin: await issueParentAccount(c, r.id) } : r; });
   await audit(req, 'student.registered', 'student', out.id);
   res.status(201).json(out);
 }));

@@ -3,6 +3,7 @@ import { AccountPage, AuditPage, InboxRoute, SettingsPage, UsersPage } from './A
 import { ContentEdit, ContentList } from './Content';
 import { Dashboard } from './Dashboard';
 import { PortalLayout } from './PortalLayout';
+import { NoticesPage, StudentLeavePage } from './Communication';
 import { AcademicsPage } from './Academics';
 import { AttendancePage } from './Attendance';
 import { ExamDetail, ExamsList, HomeworkPage, ReportCard } from './Exams';
@@ -36,6 +37,8 @@ export default function PortalRoutes() {
         <Route path="exams/:id" element={<ExamDetail />} />
         <Route path="report/:studentId" element={<ReportCard />} />
         <Route path="homework" element={<HomeworkPage />} />
+        <Route path="notices" element={<NoticesPage />} />
+        <Route path="student-leave" element={<StudentLeavePage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="audit" element={<AuditPage />} />

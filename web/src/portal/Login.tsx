@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
-import { useAuth } from '../auth';
+import { homeFor, useAuth } from '../auth';
 import { useSettings } from '../site/SiteData';
 import { clearSchemaCache } from './schema';
 
@@ -17,7 +17,7 @@ export function Login() {
     document.addEventListener('keydown', k);
     return () => document.removeEventListener('keydown', k);
   }, [sheet]);
-  if (!loading && me) return <Navigate to="/portal" replace />;
+  if (!loading && me) return <Navigate to={homeFor(me.roles)} replace />;
   async function submit(e: FormEvent) {
     e.preventDefault(); setBusy(true); setErr('');
     try {

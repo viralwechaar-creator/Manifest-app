@@ -4,6 +4,7 @@ import { query, tx } from '../../db';
 import { audit } from '../../lib/audit';
 import { requirePermission } from '../../middleware/auth';
 import { asyncH, HttpError } from '../../middleware/errors';
+import { notifyFamilies } from './family';
 import { eachDate, has, isAdmin, isClassTeacher, isoDow, myStaffId, requireStaffId, today } from './helpers';
 
 export const opsRouter = Router();
@@ -105,7 +106,9 @@ opsRouter.get('/attendance/students', requirePermission('dashboard.view'), async
   const sec = (await query('select c.name || \' \' || s.name as label from sections s join classes c on c.id=s.class_id where s.id=$1', [sectionId])).rows[0];
   if (!sec) throw new HttpError(404, 'Section not found');
   const rows = (await query(
-    `select st.id, st.student_code, st.full_name, a.status from students st left join student_attendance a on a.student_id=st.id and a.date=$2
+    `select st.id, st.student_code, st.full_name,
+            coalesce(a.status, case when exists (select 1 from student_leave_requests l where l.student_id=st.id and l.status='approved' and $2::date between l.from_date and l.to_date) then 'excused' end) as status
+       from students st left join student_attendance a on a.student_id=st.id and a.date=$2
       where st.section_id=$1 and st.status='active' order by st.full_name`, [sectionId, date])).rows;
   res.json({ section: sec.label, date, canMark: has(req, 'attendance.students.mark'), rows });
 }));
@@ -122,6 +125,8 @@ opsRouter.put('/attendance/students', requirePermission('dashboard.view'), async
        on conflict (student_id, date) do update set status=excluded.status, section_id=excluded.section_id, marked_by=excluded.marked_by, updated_at=now()`,
       [r.studentId, b.date, b.sectionId, r.status, req.auth!.user.id]);
   });
+  const absent = b.records.filter((r) => r.status === 'absent').map((r) => r.studentId);
+  if (absent.length) await notifyFamilies('select id from students where id = any($1::int[])', [absent], 'Marked absent', `Your child was marked absent on ${b.date}.`, '/family/attendance');
   await audit(req, 'attendance.students_marked', 'section', b.sectionId, { date: b.date, count: b.records.length });
   res.json({ saved: b.records.length });
 }));

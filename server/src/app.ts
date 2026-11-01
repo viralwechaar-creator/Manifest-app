@@ -21,6 +21,8 @@ import { staffRouter2 } from './modules/school/staff';
 import { studentsRouter } from './modules/school/students';
 import { opsRouter } from './modules/school/ops';
 import { examsRouter } from './modules/school/exams';
+import { familyRouter } from './modules/school/family';
+import { familyAdminRouter } from './modules/school/family-admin';
 
 export function createApp() {
   const app = express();
@@ -62,6 +64,8 @@ export function createApp() {
   api.use('/admin/school', academicsRouter);
   api.use('/admin/school', opsRouter);
   api.use('/admin/school', examsRouter);
+  api.use('/admin/school', familyAdminRouter);
+  api.use('/family', familyRouter);
   api.use('/admin/school/staff', staffRouter2);
   api.use('/admin/school/students', studentsRouter);
   api.use('/admin', staffRouter);

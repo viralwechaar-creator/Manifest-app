@@ -22,3 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const can = useCallback((p: string) => !!me?.permissions.includes(p), [me]);
   return <AuthCtx.Provider value={{ me, loading, refresh, signOut, can }}>{children}</AuthCtx.Provider>;
 }
+
+/** Parents and students have their own portal; staff accounts (even with extra roles) use the staff portal. */
+export const isFamilyOnly = (roles: string[]) => roles.length > 0 && roles.every((r) => r === 'parent' || r === 'student');
+export const homeFor = (roles: string[]) => (isFamilyOnly(roles) ? '/family' : '/portal');

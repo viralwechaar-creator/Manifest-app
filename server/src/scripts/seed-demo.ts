@@ -7,6 +7,7 @@ import { pool, query, tx } from '../db';
 import { migrate } from '../migrate';
 import { hashPassword } from '../lib/password';
 import { registerStudent } from '../modules/school/students';
+import { issueParentAccount, issueStudentAccount } from '../modules/school/family';
 
 const FIRST_F = ['Aanya', 'Diya', 'Meera', 'Isha', 'Kavya', 'Riya', 'Saanvi', 'Anika', 'Tara', 'Nisha', 'Zoya', 'Pooja'];
 const FIRST_M = ['Aarav', 'Vihaan', 'Arjun', 'Kabir', 'Rohan', 'Ishaan', 'Dev', 'Yash', 'Neel', 'Rahul', 'Aditya', 'Samar'];
@@ -128,6 +129,25 @@ async function main() {
     }
   }
   await query('update exams set results_published=true where id=$1', [exam]);
+  // ---- Phase 5 demo data: a parent with two children, notices, remarks, a pending leave request ----
+  const demoPw = await hashPassword('Demo-Pass-2026');
+  const sec3A = sections[4].id, sec6B = sections[11].id;  // Class 3 A and Class 6 B
+  const kidA = await tx((c) => registerStudent(c, { fullName: 'Aarav Menon', dateOfBirth: '2017-05-14', gender: 'male', sectionId: sec3A, admissionDate: '2023-04-10', address: '14 Demo Street (fictional)', healthNotes: '', guardians: [{ fullName: 'Rahul Menon', relation: 'Father', phone: '9811100001', isPrimary: true }] }));
+  const kidB = await tx((c) => registerStudent(c, { fullName: 'Diya Menon', dateOfBirth: '2014-02-02', gender: 'female', sectionId: sec6B, admissionDate: '2020-04-10', address: '14 Demo Street (fictional)', healthNotes: '', guardians: [{ fullName: 'Rahul Menon', relation: 'Father', phone: '9811100001', isPrimary: true }] }));
+  const pl = await tx((c) => issueParentAccount(c, kidA.id));
+  await query('update users set password_hash=$2, must_change_password=false where login_id=$1', [pl.loginId, demoPw]);
+  const sl = await tx((c) => issueStudentAccount(c, kidB.id));
+  await query('update users set password_hash=$2, must_change_password=false where login_id=$1', [sl.loginId, demoPw]);
+  for (const k of [kidA, kidB]) {
+    const sec = k === kidA ? sec3A : sec6B;
+    for (let back = 1, done = 0; done < 10; back++) { const d = new Date(Date.now() - back * 86400000); if (d.getUTCDay() === 0) continue; done++; await query('insert into student_attendance (student_id, date, section_id, status) values ($1,$2,$3,$4)', [k.id, d.toISOString().slice(0, 10), sec, done === 3 ? 'absent' : done === 6 ? 'late' : 'present']); }
+  }
+  for (const [k, sec, pct] of [[kidA, sec3A, 0.78], [kidB, sec6B, 0.86]] as const) // marks for the two demo children in every exam of their class
+    await query('insert into marks (exam_subject_id, student_id, marks) select x.id, $1, round(x.max_marks * $3::numeric) from exam_subjects x join sections s on s.class_id = x.class_id where s.id = $2', [k.id, sec, pct]);
+  await query("insert into notices (title, body, audience) values ('Annual Day rehearsals','Rehearsals for the Annual Day begin next week. Students should carry water bottles.','everyone'), ('Parent-teacher meeting','The parent-teacher meeting is on the first Saturday of next month, 10 am to 1 pm.','parents')");
+  await query("insert into student_remarks (student_id, staff_id, kind, text, visible_to_parent) values ($1,$2,'praise','Helped a classmate understand fractions today. Kind and patient.',true), ($1,$2,'concern','Needs to complete homework more regularly.',true), ($1,$2,'note','Internal: discuss seating with the class teacher.',false)", [kidA.id, teachers[0].id]);
+  await query("insert into student_leave_requests (student_id, from_date, to_date, reason) values ($1, current_date + 3, current_date + 3, 'Dental appointment')", [kidA.id]);
+  console.log(`Parent demo: sign in with ${pl.loginId} or ${kidB.studentCode} (one parent, two children). Student login: ${sl.loginId}. Password for all: Demo-Pass-2026`);
   // Next Monday: one teacher on approved leave, so a vacant period needs a substitute.
   const nm = new Date(); nm.setUTCDate(nm.getUTCDate() + ((8 - nm.getUTCDay()) % 7 || 7)); const mon = nm.toISOString().slice(0, 10);
   const leaveT = teachers[5].id;

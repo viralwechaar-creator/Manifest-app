@@ -4,6 +4,7 @@ import { query, tx } from '../../db';
 import { audit } from '../../lib/audit';
 import { requirePermission } from '../../middleware/auth';
 import { asyncH, HttpError } from '../../middleware/errors';
+import { notifyFamilies } from './family';
 import { has, isAdmin, isClassTeacher, myStaffId, requireStaffId, teachesSection } from './helpers';
 
 export const examsRouter = Router();
@@ -57,6 +58,9 @@ examsRouter.post('/exams/:id/publish', manage, asyncH(async (req, res) => {
   }
   const r = await query('update exams set results_published=$2 where id=$1', [id, published]);
   if (!r.rowCount) throw new HttpError(404, 'Not found');
+  if (published) await notifyFamilies(
+    `select s.id from students s join sections sec on sec.id=s.section_id where s.status='active' and sec.class_id in (select class_id from exam_subjects where exam_id=$1)`, [id],
+    'Results published', 'New exam results are available.', '/family/results');
   await audit(req, published ? 'exam.published' : 'exam.unpublished', 'exam', id);
   res.json({ ok: true });
 }));
@@ -126,7 +130,7 @@ examsRouter.put('/marks', anyExamAccess, asyncH(async (req, res) => {
 
 // ---------- Results and ranking ----------
 interface Row { studentId: number; code: string; name: string; sectionId: number; section: string; classId: number; marks: Record<number, { marks: number | null; absent: boolean } | undefined> }
-async function computeResults(examId: number, scope: { sectionIds?: number[]; classId?: number }) {
+export async function computeResults(examId: number, scope: { sectionIds?: number[]; classId?: number }) {
   const exam = (await query('select e.*, ay.label as year from exams e join academic_years ay on ay.id=e.academic_year_id where e.id=$1', [examId])).rows[0];
   if (!exam) throw new HttpError(404, 'Exam not found');
   const subjects = (await query('select x.id, x.class_id, x.subject_id, s.name, x.max_marks::float as max, x.pass_marks::float as pass from exam_subjects x join subjects s on s.id=x.subject_id where x.exam_id=$1 order by s.name', [examId])).rows;
@@ -200,12 +204,10 @@ examsRouter.get('/exams/:id/results', anyExamAccess, asyncH(async (req, res) => 
   res.json(out);
 }));
 
-examsRouter.get('/report/:studentId', anyExamAccess, asyncH(async (req, res) => {
-  const studentId = idp(req.params.studentId); const examId = idp(String(req.query.examId));
+/** Everything on one report card. Callers must have checked that the requester may see this student. */
+export async function buildReport(studentId: number, examId: number) {
   const st = (await query(`select st.id, st.student_code, st.full_name, st.date_of_birth, st.section_id, c.name || ' ' || sec.name as section, sec.class_id, sec.academic_year_id from students st join sections sec on sec.id=st.section_id join classes c on c.id=sec.class_id where st.id=$1`, [studentId])).rows[0];
   if (!st) throw new HttpError(404, 'Student not found');
-  const vis = await visibleSections(req);
-  if (vis && !vis.includes(st.section_id)) throw new HttpError(404, 'Student not found');
   const { exam, rows } = await computeResults(examId, { sectionIds: [st.section_id] });
   const row = rows.find((r: any) => r.studentId === studentId);
   if (!row) throw new HttpError(404, 'No results for this student in that exam.');
@@ -213,9 +215,18 @@ examsRouter.get('/report/:studentId', anyExamAccess, asyncH(async (req, res) => 
     `select count(*) filter (where status in ('present','late'))::int as present, count(*)::int as marked from student_attendance a join sections s on s.id=a.section_id where a.student_id=$1 and s.academic_year_id=$2`, [studentId, st.academic_year_id])).rows[0];
   const remark = (await query('select remark from report_remarks where exam_id=$1 and student_id=$2', [examId, studentId])).rows[0]?.remark ?? null;
   const school = (await query("select value from site_settings where key='school_name'")).rows[0]?.value ?? '';
+  return { school, exam: { id: exam.id, name: exam.name, kind: exam.kind, year: exam.year, published: exam.results_published }, student: { code: st.student_code, name: st.full_name, section: st.section, dob: st.date_of_birth }, result: row,
+    attendance: { present: att.present, marked: att.marked, percentage: att.marked ? r2((att.present / att.marked) * 100) : null }, remark, gradeScale: GRADES };
+}
+examsRouter.get('/report/:studentId', anyExamAccess, asyncH(async (req, res) => {
+  const studentId = idp(req.params.studentId); const examId = idp(String(req.query.examId));
+  const st = (await query('select section_id from students where id=$1', [studentId])).rows[0];
+  if (!st) throw new HttpError(404, 'Student not found');
+  const vis = await visibleSections(req);
+  if (vis && !vis.includes(st.section_id)) throw new HttpError(404, 'Student not found');
+  const out = await buildReport(studentId, examId);
   await audit(req, 'report.viewed', 'student', studentId, { examId });
-  res.json({ school, exam: { id: exam.id, name: exam.name, kind: exam.kind, year: exam.year, published: exam.results_published }, student: { code: st.student_code, name: st.full_name, section: st.section, dob: st.date_of_birth }, result: row,
-    attendance: { present: att.present, marked: att.marked, percentage: att.marked ? r2((att.present / att.marked) * 100) : null }, remark, gradeScale: GRADES });
+  res.json(out);
 }));
 examsRouter.put('/report/:studentId/remark', anyExamAccess, asyncH(async (req, res) => {
   const studentId = idp(req.params.studentId); const b = z.object({ examId: int, remark: z.string().trim().min(1).max(500) }).parse(req.body);
@@ -258,6 +269,7 @@ examsRouter.post('/homework', requirePermission('homework.manage'), asyncH(async
   if (!(await query('select 1 from sections s join class_subjects cs on cs.class_id=s.class_id where s.id=$1 and cs.subject_id=$2', [b.sectionId, b.subjectId])).rowCount) throw new HttpError(400, 'That subject is not taught in this class.');
   if (b.dueOn < new Date().toISOString().slice(0, 10)) throw new HttpError(400, 'The due date cannot be in the past.', { dueOn: 'In the past' });
   const r = await query('insert into assignments (section_id, subject_id, staff_id, kind, title, description, due_on, max_marks) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id', [b.sectionId, b.subjectId, sid, b.kind, b.title, b.description ?? null, b.dueOn, b.maxMarks ?? null]);
+  await notifyFamilies("select id from students where status='active' and section_id=$1", [b.sectionId], `New ${b.kind}`, `${b.title}, due ${b.dueOn}`, '/family/homework');
   await audit(req, 'homework.created', 'assignment', r.rows[0].id);
   res.status(201).json({ id: r.rows[0].id });
 }));
