@@ -54,3 +54,6 @@ Set in `docker-compose.yml` under `app → environment` if you need to change th
 
 ## Without Docker
 Node 22 + PostgreSQL 14+ + your own HTTPS proxy: set `NODE_ENV=production`, `PORT`, `DATABASE_URL`, `APP_SECRET`, `PUBLIC_ORIGIN` (must be `https://…`), `STORAGE_DIR` (a persistent disk), then `npm ci && npm run build && npm start`. The app trusts one proxy hop. In production it refuses to start with an `http://` address or a missing secret.
+
+## Online trial on Vercel (temporary)
+The repository also runs on Vercel for trials: `api/index.ts` is the entry point and `vercel.json` the routing. Settings needed: `DATABASE_URL` (Supabase pooler address, session mode), `APP_SECRET`, `PUBLIC_ORIGIN`, `STORAGE_DIR=/tmp/storage`, `DB_POOL_MAX=2`. Limits of the trial: uploaded files are not kept between visits and the daily reminder jobs do not run. Use the Docker setup above for the real server.
