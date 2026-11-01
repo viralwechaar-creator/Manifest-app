@@ -16,9 +16,13 @@ const schema = z.object({
   LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(30), // sign-in attempts per IP per 15 minutes
 });
 
-const parsed = schema.safeParse(process.env);
+// Hosting dashboards often keep stray spaces, line breaks or quote marks around pasted values; strip them.
+const clean = (v: string | undefined) => v?.trim().replace(/^(['"])(.*)\1$/, '$2').trim();
+const raw = { ...process.env, APP_SECRET: clean(process.env.APP_SECRET), DATABASE_URL: clean(process.env.DATABASE_URL), PUBLIC_ORIGIN: clean(process.env.PUBLIC_ORIGIN) };
+const parsed = schema.safeParse(raw);
 if (!parsed.success) {
   console.error('Invalid environment configuration:', parsed.error.flatten().fieldErrors);
+  if (raw.APP_SECRET !== undefined && !/^[0-9a-f]{64}$/i.test(raw.APP_SECRET)) console.error(`APP_SECRET has ${raw.APP_SECRET.length} characters (needs exactly 64, using only 0-9 and a-f).`);
   process.exit(1);
 }
 const env = parsed.data;
