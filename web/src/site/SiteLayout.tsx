@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useSettings } from './SiteData';
 
 interface NavItem { to: string; label: string }
@@ -22,79 +22,89 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     { to: '/policies', label: 'Policies' }, { to: '/careers', label: 'Careers' }, { to: '/contact', label: 'Contact' }] },
 ];
 
-function Brand() {
+function Brand({ light }: { light?: boolean }) {
   const { s } = useSettings();
   return (
-    <Link to="/" className="brand" aria-label={`${s.school_name || 'School'} home`}>
+    <Link to="/" className="brand" aria-label={`${s.school_name || 'School'} home`} style={light ? { color: '#fff' } : undefined}>
       {s.logo_url ? <img src={s.logo_url} alt="" /> : <span className="brand-mark" aria-hidden>{(s.school_name || 'S')[0]}</span>}
-      <span style={{ minWidth: 0 }}><b>{s.school_name || 'School'}</b>{s.tagline && <small>{s.tagline}</small>}</span>
+      <span style={{ minWidth: 0 }}><b>{s.school_name || 'School'}</b></span>
     </Link>
   );
 }
 
-function Dropdown({ g }: { g: (typeof GROUPS)[number] }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { s } = useSettings();
+  const [active, setActive] = useState(0);
   const loc = useLocation();
-  useEffect(() => setOpen(false), [loc.pathname]);
+  useEffect(() => { onClose(); }, [loc.pathname]); // eslint-disable-line
   useEffect(() => {
-    const out = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', out); document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', esc); };
-  }, []);
-  const active = g.items.some((i) => loc.pathname === i.to);
+    if (!open) return;
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', esc); document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', esc); document.body.style.overflow = ''; };
+  }, [open, onClose]);
   return (
-    <div className="nav-dd" ref={ref} onMouseEnter={() => matchMedia('(hover:hover)').matches && setOpen(true)} onMouseLeave={() => matchMedia('(hover:hover)').matches && setOpen(false)}>
-      <button aria-expanded={open} aria-haspopup="true" className={active ? 'active' : ''} onClick={() => setOpen((o) => !o)}>
-        {g.label}
-        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden style={{ transition: 'transform .25s', transform: open ? 'rotate(180deg)' : 'none' }}><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div className="dd-panel" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
-            {g.items.map((i) => <NavLink key={i.to} to={i.to} end>{i.label}</NavLink>)}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div className="menu" role="dialog" aria-modal="true" aria-label="Site menu"
+          initial={{ clipPath: 'inset(0 0 100% 0)' }} animate={{ clipPath: 'inset(0 0 0% 0)' }} exit={{ clipPath: 'inset(0 0 100% 0)' }} transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}>
+          <div className="menu-top wrap">
+            <Brand light />
+            <button className="pillbtn light" onClick={onClose} aria-label="Close menu">Close <span aria-hidden>✕</span></button>
+          </div>
+          <div className="wrap menu-body">
+            <ol className="menu-groups">
+              {GROUPS.map((g, i) => (
+                <motion.li key={g.label} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.06, duration: 0.5 }}>
+                  <button className={i === active ? 'on' : ''} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)} aria-expanded={i === active}>
+                    <span className="num">{String(i + 1).padStart(2, '0')}</span><span className="lbl">{g.label}</span>
+                  </button>
+                  <div className="menu-sub-m" hidden={i !== active}>{g.items.map((it) => <Link key={it.to} to={it.to}>{it.label}</Link>)}</div>
+                </motion.li>
+              ))}
+            </ol>
+            <div className="menu-panel">
+              <AnimatePresence mode="wait">
+                <motion.div key={active} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  <small>{GROUPS[active].label}</small>
+                  {GROUPS[active].items.map((it) => <Link key={it.to} to={it.to}>{it.label}<span aria-hidden>→</span></Link>)}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+          <div className="wrap menu-foot">
+            <Link to="/">Home</Link>
+            <Link to="/login">Portal login</Link>
+            {s.phone && <a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a>}
+            {s.email && <a href={`mailto:${s.email}`}>{s.email}</a>}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
 function Header() {
   const [solid, setSolid] = useState(false);
-  const [drawer, setDrawer] = useState(false);
+  const [menu, setMenu] = useState(false);
   const loc = useLocation();
-  useEffect(() => { const f = () => setSolid(window.scrollY > 24); f(); window.addEventListener('scroll', f, { passive: true }); return () => window.removeEventListener('scroll', f); }, []);
-  useEffect(() => setDrawer(false), [loc.pathname]);
-  useEffect(() => { document.body.style.overflow = drawer ? 'hidden' : ''; }, [drawer]);
+  const onHero = loc.pathname === '/';
+  useEffect(() => { const f = () => setSolid(window.scrollY > (onHero ? window.innerHeight * 0.8 : 24)); f(); window.addEventListener('scroll', f, { passive: true }); return () => window.removeEventListener('scroll', f); }, [onHero]);
+  const light = onHero && !solid;
   return (
     <>
-      <header className={'hdr' + (solid ? ' solid' : '')}>
+      <header className={'hdr' + (solid ? ' solid' : '') + (light ? ' over' : '')}>
         <div className="wrap hdr-in">
-          <Brand />
-          <nav className="nav" aria-label="Main">
-            {GROUPS.map((g) => <Dropdown key={g.label} g={g} />)}
-          </nav>
-          <div className="flex">
-            <Link className="btn sm ghost portal-link" to="/login">Portal login</Link>
-            <button className="burger" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}>
-              <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden><path d="M0 1h18M0 6h18M0 11h18" stroke="currentColor" strokeWidth="1.5" /></svg>
+          <Brand light={light} />
+          <div className="flex" style={{ flexWrap: 'nowrap' }}>
+            <Link className={'pillbtn hide-sm' + (light ? ' light' : '')} to="/admissions/enquiry">Admission enquiry</Link>
+            <button className={'pillbtn' + (light ? ' light' : '')} onClick={() => setMenu(true)} aria-haspopup="dialog" aria-expanded={menu}>
+              Menu <svg width="16" height="8" viewBox="0 0 16 8" aria-hidden><path d="M0 1h16M0 7h16" stroke="currentColor" strokeWidth="1.4" /></svg>
             </button>
           </div>
         </div>
       </header>
-      <AnimatePresence>
-        {drawer && (
-          <motion.div className="drawer" role="dialog" aria-modal="true" aria-label="Menu" initial={{ clipPath: 'circle(0% at 95% 4%)' }} animate={{ clipPath: 'circle(150% at 95% 4%)' }} exit={{ clipPath: 'circle(0% at 95% 4%)' }} transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}>
-            <button className="close" aria-label="Close menu" onClick={() => setDrawer(false)}>✕</button>
-            <Link to="/">Home</Link>
-            {GROUPS.map((g) => (<div key={g.label}><small>{g.label}</small>{g.items.map((i) => <Link key={i.to} to={i.to}>{i.label}</Link>)}</div>))}
-            <small>Staff, parents & students</small>
-            <Link to="/login">Portal login</Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MenuOverlay open={menu} onClose={() => setMenu(false)} />
     </>
   );
 }

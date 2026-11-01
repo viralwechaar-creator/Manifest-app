@@ -23,7 +23,11 @@ export function Login() {
     <div className="login-shell">
       <div className="login-art grain">
         <a href="/" className="brand" style={{ color: '#fff' }}><span className="brand-mark" style={{ background: 'var(--paper)', color: 'var(--forest)' }}>{(s.school_name || 'S')[0]}</span><b style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}>{s.school_name}</b></a>
-        <div><h1 style={{ fontSize: 'clamp(2rem,4vw,3.4rem)', maxWidth: '12ch' }}>Welcome back</h1><p style={{ color: '#c8d3c6', maxWidth: '34ch', marginTop: '1rem' }}>Sign in to the school portal. Staff, parents and students each see only what is theirs.</p></div>
+        <div>
+          <h1 style={{ fontSize: 'clamp(2.2rem,4.6vw,4rem)', maxWidth: '10ch' }}>Welcome back</h1>
+          <p style={{ color: '#c8d3c6', maxWidth: '36ch', margin: '1rem 0 1.6rem' }}>Everyone sees only what is theirs.</p>
+          <div className="glass-row">{[['01', 'Staff'], ['02', 'Parents'], ['03', 'Students']].map(([n, l], i) => <div key={n} className={'glass' + (i === 0 ? ' on' : '')}><span>{n}</span>{l}</div>)}</div>
+        </div>
         <a href="/" style={{ color: 'var(--olive)' }}>← Back to the website</a>
       </div>
       <div className="login-form">

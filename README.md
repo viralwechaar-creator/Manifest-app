@@ -2,7 +2,7 @@
 
 One school, one system: public website, staff/parent/student portals and school operations on a single secure platform.
 
-**Status: Phases 1 and 2 complete** (foundation + public website with admin-editable content). See `docs/ARCHITECTURE.md` for the roadmap.
+**Status: Phases 1 and 2 complete**, with the v2 visual identity (fullscreen hero, numbered menu, arch motif). See `docs/ARCHITECTURE.md` for the roadmap.
 
 ## Stack
 React + TypeScript + Vite (web) · Node + Express + TypeScript (server) · PostgreSQL · `motion` for animation.
