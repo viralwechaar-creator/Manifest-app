@@ -3,6 +3,9 @@ import { AccountPage, AuditPage, InboxRoute, SettingsPage, UsersPage } from './A
 import { ContentEdit, ContentList } from './Content';
 import { Dashboard } from './Dashboard';
 import { PortalLayout } from './PortalLayout';
+import { ComplaintsPage, MessagesPage } from './Comm';
+import { HRPage, MyPayPage } from './HR';
+import { LibraryPage, TransportPage } from './Operations';
 import { AdmissionDetail, AdmissionsList } from './Admissions';
 import { FinancePage } from './Finance';
 import { NoticesPage, StudentLeavePage } from './Communication';
@@ -45,6 +48,15 @@ export default function PortalRoutes() {
         <Route path="admissions/:id" element={<AdmissionDetail />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="finance/:tab" element={<FinancePage />} />
+        <Route path="messages" element={<MessagesPage />} />
+        <Route path="complaints" element={<ComplaintsPage />} />
+        <Route path="transport" element={<TransportPage />} />
+        <Route path="transport/:tab" element={<TransportPage />} />
+        <Route path="library" element={<LibraryPage />} />
+        <Route path="library/:tab" element={<LibraryPage />} />
+        <Route path="hr" element={<HRPage />} />
+        <Route path="hr/:tab" element={<HRPage />} />
+        <Route path="my/payslips" element={<MyPayPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="audit" element={<AuditPage />} />

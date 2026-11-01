@@ -46,7 +46,15 @@ export function PortalLayout() {
         {(can('notices.manage') || can('student_leave.decide')) && <h5>Parents & students</h5>}
         {can('notices.manage') && link('/portal/notices', 'Notices')}
         {can('student_leave.decide') && link('/portal/student-leave', 'Student leave')}
+        {(can('messages.use') || can('complaints.submit')) && <h5>Communication</h5>}
+        {can('messages.use') && link('/portal/messages', 'Messages')}
+        {(can('complaints.submit') || can('complaints.handle')) && link('/portal/complaints', 'Complaints & concerns')}
+        {(can('transport.manage') || can('transport.view') || can('library.manage') || can('library.view') || can('hr.manage') || can('payroll.manage') || can('payroll.approve')) && <h5>Departments</h5>}
+        {(can('transport.manage') || can('transport.view')) && link('/portal/transport', 'Transport')}
+        {(can('library.manage') || can('library.view')) && link('/portal/library', 'Library')}
+        {(can('hr.manage') || can('payroll.manage') || can('payroll.approve')) && link('/portal/hr', 'HR & payroll')}
         {(can('leave.apply') || can('substitutions.manage')) && <h5>Staff</h5>}
+        {link('/portal/my/payslips', 'My payslips')}
         {can('leave.apply') && link('/portal/leave', 'Leave')}
         {can('substitutions.manage') && link('/portal/substitutions', 'Substitutions')}
         {(can('admissions.review') || can('admissions.view') || can('fees.view') || can('expenses.manage')) && <h5>Admissions & fees</h5>}

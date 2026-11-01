@@ -91,3 +91,27 @@ export function TrackPage() {
         <Docs reference={st.reference} code={code.trim()} status={st} onChange={load} /></Reveal>}
     </div></section></>);
 }
+
+export function JobApplyButton({ job }: { job: { id: number; title: string } }) {
+  const { s } = useSettings(); const [open, setOpen] = useState(false); const input = useRef<HTMLInputElement>(null);
+  const [f, setF] = useState({ fullName: '', email: '', phone: '', note: '', website: '' }); const [consent, setConsent] = useState(false); const [file, setFile] = useState<File | null>(null); const [err, setErr] = useState<ApiError | null>(null); const [busy, setBusy] = useState(false); const [done, setDone] = useState(false);
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setBusy(true); setErr(null);
+    try { const fd = new FormData(); fd.append('openingId', String(job.id)); for (const [k, v] of Object.entries(f)) if (v) fd.append(k, v); fd.append('consent', String(consent)); if (file) fd.append('resume', file); await api('/apply/jobs', { method: 'POST', form: fd }); setDone(true); }
+    catch (x) { setErr(x as ApiError); } finally { setBusy(false); }
+  }
+  const fe = err?.fields ?? {};
+  return (<><button className="btn" onClick={() => { setOpen(true); setDone(false); setErr(null); }}>Apply for this position</button>
+    {open && <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}><div className="modal" role="dialog" aria-modal="true" aria-label={`Apply: ${job.title}`}>
+      <h3>Apply: {job.title}</h3>
+      {done ? <><div className="notice ok" role="status">Thank you. Your application has been received. We will contact you if you are shortlisted.</div><p><button className="btn ghost" onClick={() => setOpen(false)}>Close</button></p></> : <form onSubmit={submit} noValidate>
+        {err && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{err.message}</div>}
+        <div className={'field' + (fe.fullName ? ' invalid' : '')}><label htmlFor="j1">Full name *</label><input id="j1" type="text" value={f.fullName} onChange={(e) => setF({ ...f, fullName: e.target.value })} /></div>
+        <div className="two-col"><div className={'field' + (fe.email ? ' invalid' : '')}><label htmlFor="j2">Email *</label><input id="j2" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />{fe.email && <span className="err">{fe.email}</span>}</div><div className={'field' + (fe.phone ? ' invalid' : '')}><label htmlFor="j3">Phone *</label><input id="j3" type="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />{fe.phone && <span className="err">{fe.phone}</span>}</div></div>
+        <div className="field"><label htmlFor="j4">A few words about you</label><textarea id="j4" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
+        <div className="field"><span className="lbl">CV (PDF, up to 5 MB)</span><input ref={input} type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
+        <div className="hp" aria-hidden><label>Leave this empty<input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} /></label></div>
+        <div className={'field' + (fe.consent ? ' invalid' : '')}><label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span>I agree that the school may use these details to consider my application.</span></label>{fe.consent && <span className="err" role="alert">{fe.consent}</span>}<span className="help">{s.privacy_notice_text}</span></div>
+        <div className="flex"><button className="btn" disabled={busy}>{busy ? 'Sending…' : 'Send application'}</button><button type="button" className="btn ghost" onClick={() => setOpen(false)}>Cancel</button></div></form>}
+    </div></div>}</>);
+}

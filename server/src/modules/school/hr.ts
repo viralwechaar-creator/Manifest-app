@@ -125,17 +125,19 @@ async function buildPayslips(c: { query: Function }, runId: number, month: strin
   }
   return made;
 }
+/** Creates or refreshes the draft payroll for a month. */
+export async function prepareRun(c: { query: Function }, month: string, userId: string) {
+  let run = (await c.query('select * from payroll_runs where month=$1 for update', [month])).rows[0];
+  if (run?.status === 'finalised') throw new HttpError(409, 'This month’s payroll is finalised and locked.');
+  if (!run) run = (await c.query('insert into payroll_runs (month, created_by) values ($1,$2) returning *', [month, userId])).rows[0]; else await c.query('delete from payslips where run_id=$1', [run.id]); // regenerate the draft
+  const n = await buildPayslips(c, run.id, month); if (!n) throw new HttpError(400, 'No staff have salary components set up yet.');
+  return { id: run.id as number, payslips: n };
+}
 hrRouter.get('/payroll', anyPayroll, asyncH(async (_req, res) => { res.json((await query(`select r.id, r.month, r.status, r.finalised_at, (select count(*)::int from payslips p where p.run_id=r.id) as payslips, (select coalesce(sum(net),0)::float from payslips p where p.run_id=r.id) as total_net, u.display_name as prepared_by from payroll_runs r left join users u on u.id=r.created_by order by r.month desc`)).rows); }));
 hrRouter.post('/payroll', payroll, asyncH(async (req, res) => {
   const { month } = z.object({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use YYYY-MM') }).parse(req.body);
   if (month > new Date().toISOString().slice(0, 7)) throw new HttpError(400, 'Payroll cannot be prepared for a future month.', { month: 'In the future' });
-  const out = await tx(async (c) => {
-    let run = (await c.query('select * from payroll_runs where month=$1 for update', [month])).rows[0];
-    if (run?.status === 'finalised') throw new HttpError(409, 'This month’s payroll is finalised and locked.');
-    if (!run) run = (await c.query('insert into payroll_runs (month, created_by) values ($1,$2) returning *', [month, req.auth!.user.id])).rows[0]; else await c.query('delete from payslips where run_id=$1', [run.id]); // regenerate the draft
-    const n = await buildPayslips(c, run.id, month); if (!n) throw new HttpError(400, 'No staff have salary components set up yet.');
-    return { id: run.id as number, payslips: n };
-  });
+  const out = await tx((c) => prepareRun(c, month, req.auth!.user.id));
   await audit(req, 'payroll.prepared', 'payroll_run', out.id, { month, payslips: out.payslips }); res.status(201).json(out);
 }));
 hrRouter.get('/payroll/:id', anyPayroll, asyncH(async (req, res) => {

@@ -5,6 +5,7 @@ import { Prose } from '../components/Prose';
 import { Reveal } from '../components/Reveal';
 import { Loading } from '../components/States';
 import { fmtDate } from '../lib';
+import { JobApplyButton } from './Admission';
 import { Async, PageHead } from './Parts';
 import { usePublic } from './SiteData';
 import { TextPage } from './TextPages';
@@ -167,7 +168,7 @@ export function CareersPage() {
         <Async state={st} empty="There are no open positions right now. Please check back later.">{(rows) => (
           <div className="stack">{rows.map((j) => (<Reveal key={j.id}><div className="panel"><div className="flex" style={{ justifyContent: 'space-between' }}><h3 style={{ fontSize: '1.4rem' }}>{j.title}</h3><span className="chip">{j.employment_type}</span></div>
             <p className="muted" style={{ fontSize: '.88rem' }}>{[j.department, j.closes_on && `Apply by ${fmtDate(j.closes_on)}`].filter(Boolean).join(' · ')}</p><Prose text={j.description} />
-            <Link className="link-arrow" to={`/contact?subject=${encodeURIComponent('Application: ' + j.title)}`}>Apply through the contact form →</Link></div></Reveal>))}</div>)}</Async>
+            <JobApplyButton job={{ id: j.id, title: j.title }} /></div></Reveal>))}</div>)}</Async>
       </div>
     </TextPage>
   );

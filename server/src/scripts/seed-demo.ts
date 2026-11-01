@@ -12,6 +12,8 @@ import fs from 'fs';
 import path from 'path';
 import { sha256 } from '../lib/crypto';
 import { generateCharges, recordPayment } from '../modules/school/fees';
+import { prepareRun } from '../modules/school/hr';
+import { assignTransport } from '../modules/school/transport';
 import { PRIVATE_DIR } from '../modules/uploads';
 
 const FIRST_F = ['Aanya', 'Diya', 'Meera', 'Isha', 'Kavya', 'Riya', 'Saanvi', 'Anika', 'Tara', 'Nisha', 'Zoya', 'Pooja'];
@@ -200,6 +202,44 @@ async function main() {
   await mkApp('APP-2026-0001', 'Ira Kapoor', 'submitted', 'pending', 'Neha Kapoor', '9833300001');
   await mkApp('APP-2026-0002', 'Zara Ahmed', 'approved', 'verified', 'Sara Ahmed', '9833300002');
   console.log('Finance demo logins: accounts1 (accounts), admissions1 (admissions), principal1 (principal), password Demo-Pass-2026. Applications: APP-2026-0001 (tracking code DEMOA-00001) and APP-2026-0002 (DEMOA-00002, approved, ready to enrol).');
+  // ---- Phase 7 demo data: staff logins, messages, concerns, transport, library, HR ----
+  for (const [login, name, role] of [['transport1', 'Joseph George', 'transport_staff'], ['librarian1', 'Rekha Pillai', 'librarian'], ['hr1', 'Anita Desai', 'hr_staff']]) {
+    const u = (await query('insert into users (login_id, display_name, password_hash) values ($1::citext,$2,$3) returning id', [login, name, demoPw])).rows[0].id;
+    await query('insert into user_roles select $1, id from roles where code=$2', [u, role]);
+  }
+  await query('update sections set class_teacher_id=$2 where id=$1', [sec3A, teachers[0].id]); await query('update sections set class_teacher_id=$2 where id=$1', [sec6B, teachers[1].id]);
+  const uid = async (login: string) => (await query('select id from users where login_id=$1', [login])).rows[0].id as string;
+  const parentUser = await uid(pl.loginId); const t1 = await uid('teacher1'); const principalUser = await uid('principal1');
+  const th = (await query("insert into threads (student_id, parent_user_id, staff_user_id, subject, created_by, last_message_at, staff_read_at) values ($1,$2,$3,'Homework routine',$2,now(),now()) returning id", [kidA.id, parentUser, t1])).rows[0].id;
+  await query("insert into messages (thread_id, sender_id, body, created_at) values ($1,$2,'Good evening. Aarav finds the English homework long. Could we talk about how much time it should take?', now() - interval '3 hours'), ($1,$3,'Thank you for writing. It should take about 30 minutes. I will keep an eye on it this week.', now() - interval '1 hour')", [th, parentUser, t1]);
+  await query("insert into complaints (ref, submitted_by, student_id, category, subject, body) values ('CMP-2026-0001', $1, $2, 'transport', 'Bus arrives late in the evening', 'The evening bus has been about 20 minutes late for the past week. Could this be looked into?')", [parentUser, kidA.id]);
+  await query("insert into complaint_counters (year, last_number) values (2026, 1) on conflict (year) do update set last_number = 1");
+  await query("insert into vehicles (reg_no, kind, capacity, insurance_expiry, fitness_expiry) values ('KA01AB1234','Bus',40,current_date + 200,current_date + 20), ('KA01CD5678','Mini bus',20,current_date + 90,current_date + 150)");
+  await query("insert into drivers (full_name, phone, license_no, license_expiry) values ('Ramesh Kumar','9000011111','DL-0420110012345',current_date + 400), ('Suresh Babu','9000022222','DL-0320090054321',current_date + 45)");
+  const rN = (await query("insert into transport_routes (name, vehicle_id, driver_id, attendant, monthly_fee) select 'North Loop', v.id, d.id, 'Mrs. Lakshmi', 900 from vehicles v, drivers d where v.reg_no='KA01AB1234' and d.full_name='Ramesh Kumar' returning id")).rows[0].id;
+  const rS = (await query("insert into transport_routes (name, vehicle_id, driver_id, attendant, monthly_fee) select 'South Loop', v.id, d.id, 'Mr. Anand', 750 from vehicles v, drivers d where v.reg_no='KA01CD5678' and d.full_name='Suresh Babu' returning id")).rows[0].id;
+  const stopsOf: Record<number, number[]> = {};
+  for (const [rid, names] of [[rN, ['Lake View Gate', 'Market Junction', 'Temple Road', 'Green Park']], [rS, ['Station Road', 'City Mall', 'Old Bridge', 'Hill Colony']]] as const) { stopsOf[rid] = []; for (const [i, n] of names.entries()) stopsOf[rid].push((await query("insert into transport_stops (route_id, name, sequence, pickup_time, drop_time) values ($1,$2,$3,$4,$5) returning id", [rid, n, i + 1, `07:${10 + i * 8}`, `15:${30 + i * 8}`])).rows[0].id); }
+  await tx((c) => assignTransport(c, { studentId: kidA.id, routeId: rN, stopId: stopsOf[rN][1] })); await tx((c) => assignTransport(c, { studentId: kidB.id, routeId: rS, stopId: stopsOf[rS][0] }));
+  for (const [i, st] of payers.slice(0, 10).entries()) await tx((c) => assignTransport(c, { studentId: st.id, routeId: i % 2 ? rN : rS, stopId: stopsOf[i % 2 ? rN : rS][i % 4] }));
+  const lib: [string, string, string, number][] = [['The Jungle Book', 'Rudyard Kipling', 'Fiction', 3], ['Malgudi Days', 'R. K. Narayan', 'Fiction', 2], ['Wings of Fire', 'A. P. J. Abdul Kalam', 'Biography', 3], ['A Brief History of Time', 'Stephen Hawking', 'Science', 1], ['Atlas of India', 'Survey of India', 'Reference', 2], ['Panchatantra Tales', 'Vishnu Sharma', 'Fiction', 3], ['Discovery of India', 'Jawaharlal Nehru', 'History', 1], ['Oxford Dictionary', 'Oxford', 'Reference', 2]];
+  let acc = 0;
+  for (const [title, author, cat, n] of lib) { const b = (await query('insert into books (title, author, category) values ($1,$2,$3) returning id', [title, author, cat])).rows[0].id; for (let i = 0; i < n; i++) await query('insert into book_copies (book_id, accession_no, shelf) values ($1,$2,$3)', [b, `LIB${String(++acc).padStart(5, '0')}`, `${cat[0]}-${1 + (acc % 5)}`]); }
+  const copy = async (title: string) => (await query("select c.id from book_copies c join books b on b.id=c.book_id where b.title=$1 and c.status='available' order by c.id limit 1", [title])).rows[0].id as number;
+  for (const [stu, title, issued, due] of [[kidA.id, 'The Jungle Book', 5, 9], [kidB.id, 'Malgudi Days', 18, -4], [kidB.id, 'Wings of Fire', 40, -26]] as const) {
+    const cp = await copy(title); await query("insert into loans (copy_id, student_id, issued_on, due_on, returned_on, fine, fine_paid) values ($1,$2,current_date - $3::int, current_date + $4::int, $5, $6, false)", [cp, stu, issued, due, title === 'Wings of Fire' ? new Date().toISOString().slice(0, 10) : null, title === 'Wings of Fire' ? 4 : 0]);
+    if (title !== 'Wings of Fire') await query("update book_copies set status='issued' where id=$1", [cp]);
+  }
+  await query("insert into loans (copy_id, staff_id, issued_on, due_on) values ($1,$2,current_date - 3, current_date + 11)", [await copy('Atlas of India'), teachers[0].id]); await query("update book_copies set status='issued' where id=(select copy_id from loans where staff_id is not null and returned_on is null limit 1)");
+  const staffAll = (await query("select id, kind from staff order by id")).rows;
+  for (const [i, s2] of staffAll.entries()) { const base = s2.kind === 'teacher' ? 30000 + 3000 * (i % 4) : 22000; await query("insert into salary_components (staff_id, name, kind, amount) values ($1,'Basic pay','earning',$2), ($1,'House rent allowance','earning',$3), ($1,'Provident fund','deduction',$4)", [s2.id, base, Math.round(base * 0.3), Math.round(base * 0.06)]); }
+  const hrUser = await uid('hr1'); const lastMonth = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+  await tx((c) => prepareRun(c, lastMonth, hrUser));
+  const pdf = Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF');
+  fs.mkdirSync(path.join(PRIVATE_DIR, 'resumes'), { recursive: true });
+  const opening = (await query("insert into job_openings (title, department, employment_type, description) values ('Mathematics Teacher (Class 6 to 8)','Mathematics','Full-time','Graduate with B.Ed. and 2+ years of experience. Joining next term.') returning id")).rows[0].id;
+  for (const [n, email, st] of [['Priya Nambiar', 'priya.demo@example.com', 'new'], ['Arjun Rao', 'arjun.demo@example.com', 'offered']] as const) { const f = `demo-cv-${n.split(' ')[0].toLowerCase()}.pdf`; fs.writeFileSync(path.join(PRIVATE_DIR, 'resumes', f), pdf); await query("insert into job_applications (opening_id, full_name, email, phone, note, resume_stored, resume_name, status, consent_purpose, consent_notice_version) values ($1,$2,$3,'9877700000','Eight years of teaching mathematics.',$4,'cv.pdf',$5,'Consider this job application','1')", [opening, n, email, f, st]); }
+  console.log('Departments demo logins: transport1, librarian1, hr1 (password Demo-Pass-2026). principal1 can approve the draft payroll for ' + lastMonth + '.');
   console.log(`Demo data ready: 8 classes, ${sections.length} sections, ${teachers.length + 4} staff, ${count} students.`);
   console.log('Demo teacher logins: teacher1, teacher2, teacher3  |  password: Demo-Pass-2026');
   console.log('Unit Test 1 (published) and a class test have marks; next Monday has an open vacant period.');

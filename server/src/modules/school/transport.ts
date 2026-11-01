@@ -110,19 +110,22 @@ async function endTransport(c: PoolClient, studentId: number) {
   const r = await c.query(`delete from fee_charges ch where ch.student_id=$1 and ch.period_key like 'transport-%' and ch.due_on > current_date and not exists (select 1 from payment_allocations a where a.charge_id=ch.id)`, [studentId]);
   return r.rowCount ?? 0;
 }
+/** Gives a student a seat on a route and raises the monthly fee, inside the caller's transaction. */
+export async function assignTransport(c: PoolClient, b: { studentId: number; routeId: number; stopId: number; direction?: 'both' | 'pickup' | 'drop' }) {
+  if (!(await c.query("select 1 from students where id=$1 and status='active' for update", [b.studentId])).rowCount) throw new HttpError(404, 'Active student not found');
+  const r = (await c.query('select r.*, v.capacity from transport_routes r left join vehicles v on v.id=r.vehicle_id where r.id=$1 for update of r', [b.routeId])).rows[0];
+  if (!r || !r.active) throw new HttpError(400, 'That route is not running.');
+  if (!(await c.query('select 1 from transport_stops where id=$1 and route_id=$2', [b.stopId, b.routeId])).rowCount) throw new HttpError(400, 'That stop is not on this route.');
+  const cur = (await c.query('select route_id from student_transport where student_id=$1 and ended_on is null', [b.studentId])).rows[0];
+  if (cur) await endTransport(c, b.studentId);
+  if (r.capacity) { const used = (await c.query('select count(*)::int n from student_transport where route_id=$1 and ended_on is null', [b.routeId])).rows[0].n; if (used >= r.capacity) throw new HttpError(409, `The vehicle on this route is full (${r.capacity} seats).`); }
+  await c.query('insert into student_transport (student_id, route_id, stop_id, direction) values ($1,$2,$3,$4)', [b.studentId, b.routeId, b.stopId, b.direction ?? 'both']);
+  return { fees: await raiseTransportFees(c, b.studentId, Number(r.monthly_fee)), route: r.name };
+}
+
 transportRouter.post('/assign', manage, asyncH(async (req, res) => {
   const b = z.object({ studentId: z.number().int().positive(), routeId: z.number().int().positive(), stopId: z.number().int().positive(), direction: z.enum(['both', 'pickup', 'drop']).optional() }).parse(req.body);
-  const out = await tx(async (c) => {
-    if (!(await c.query("select 1 from students where id=$1 and status='active' for update", [b.studentId])).rowCount) throw new HttpError(404, 'Active student not found');
-    const r = (await c.query('select r.*, v.capacity from transport_routes r left join vehicles v on v.id=r.vehicle_id where r.id=$1 for update of r', [b.routeId])).rows[0];
-    if (!r || !r.active) throw new HttpError(400, 'That route is not running.');
-    if (!(await c.query('select 1 from transport_stops where id=$1 and route_id=$2', [b.stopId, b.routeId])).rowCount) throw new HttpError(400, 'That stop is not on this route.');
-    const cur = (await c.query('select route_id from student_transport where student_id=$1 and ended_on is null', [b.studentId])).rows[0];
-    if (cur) await endTransport(c, b.studentId);
-    if (r.capacity) { const used = (await c.query('select count(*)::int n from student_transport where route_id=$1 and ended_on is null', [b.routeId])).rows[0].n; if (used >= r.capacity) throw new HttpError(409, `The vehicle on this route is full (${r.capacity} seats).`); }
-    await c.query('insert into student_transport (student_id, route_id, stop_id, direction) values ($1,$2,$3,$4)', [b.studentId, b.routeId, b.stopId, b.direction ?? 'both']);
-    return { fees: await raiseTransportFees(c, b.studentId, Number(r.monthly_fee)), route: r.name };
-  });
+  const out = await tx((c) => assignTransport(c, b));
   await notifyFamilies('select id from students where id=$1', [b.studentId], 'Transport arranged', `Route ${out.route}. See Transport for stop and timings.`, '/family/transport');
   await audit(req, 'transport.assigned', 'student', b.studentId, { routeId: b.routeId }); res.status(201).json({ feesRaised: out.fees });
 }));
@@ -136,6 +139,11 @@ transportRouter.get('/routes/:id/students', manage, asyncH(async (req, res) => {
       (select g.phone from student_guardians sg join guardians g on g.id=sg.guardian_id where sg.student_id=s.id order by sg.is_primary desc limit 1) as parent_phone
     from student_transport st join students s on s.id=st.student_id join transport_stops ts on ts.id=st.stop_id left join sections sec on sec.id=s.section_id left join classes c on c.id=sec.class_id
    where st.route_id=$1 and st.ended_on is null order by ts.sequence, s.full_name`, [idp(req.params.id)])).rows);
+}));
+// A narrow lookup so transport staff can find a student without general access to student records.
+transportRouter.get('/student-search', manage, asyncH(async (req, res) => {
+  const q = String(req.query.q ?? '').trim(); if (q.length < 2) return res.json([]);
+  res.json((await query(`select s.id, s.student_code, s.full_name, c.name || ' ' || sec.name as section from students s left join sections sec on sec.id=s.section_id left join classes c on c.id=sec.class_id where s.status='active' and (s.full_name ilike $1 or s.student_code ilike $1) order by s.full_name limit 8`, [`%${q}%`])).rows);
 }));
 transportRouter.get('/students/:id', view, asyncH(async (req, res) => {
   res.json((await query(`select st.route_id, r.name as route, ts.id as stop_id, ts.name as stop, st.direction from student_transport st join transport_routes r on r.id=st.route_id join transport_stops ts on ts.id=st.stop_id where st.student_id=$1 and st.ended_on is null`, [idp(req.params.id)])).rows[0] ?? null);

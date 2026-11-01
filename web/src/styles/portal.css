@@ -203,3 +203,6 @@ a.hrow:hover { background: var(--olive-soft); }
 button, a { -webkit-tap-highlight-color: transparent; }
 .receipt { min-width: min(520px, 80vw); } .receipt .rc-head { margin-bottom: .6rem; }
 @media print { .scrim { position: static; background: none; padding: 0; } .modal { box-shadow: none; max-height: none; padding: 0; } .receipt { min-width: 0; } }
+.bubbles { display: grid; gap: .6rem; max-height: 52vh; overflow-y: auto; padding: 1rem 0; }
+.bubble { max-width: 82%; background: var(--paper-2); border-radius: 20px 20px 20px 6px; padding: .7rem 1rem; display: grid; gap: .2rem; justify-self: start; white-space: pre-wrap; }
+.bubble.mine { background: var(--forest); color: #fff; border-radius: 20px 20px 6px 20px; justify-self: end; } .bubble small { font-size: .7rem; opacity: .7; }
