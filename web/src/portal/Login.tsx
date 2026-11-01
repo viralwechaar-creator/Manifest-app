@@ -20,27 +20,32 @@ export function Login() {
     } catch (x) { setErr((x as ApiError).message); } finally { setBusy(false); }
   }
   return (
-    <div className="login-shell">
-      <div className="login-art grain">
-        <a href="/" className="brand" style={{ color: '#fff' }}><span className="brand-mark" style={{ background: 'var(--paper)', color: 'var(--forest)' }}>{(s.school_name || 'S')[0]}</span><b style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}>{s.school_name}</b></a>
-        <div>
-          <h1 style={{ fontSize: 'clamp(2.2rem,4.6vw,4rem)', maxWidth: '10ch' }}>Welcome back</h1>
-          <p style={{ color: '#c8d3c6', maxWidth: '36ch', margin: '1rem 0 1.6rem' }}>Everyone sees only what is theirs.</p>
-          <div className="glass-row">{[['01', 'Staff'], ['02', 'Parents'], ['03', 'Students']].map(([n, l], i) => <div key={n} className={'glass' + (i === 0 ? ' on' : '')}><span>{n}</span>{l}</div>)}</div>
-        </div>
-        <a href="/" style={{ color: 'var(--olive)' }}>← Back to the website</a>
-      </div>
-      <div className="login-form">
-        <form onSubmit={submit}>
-          <h2 style={{ fontSize: '2rem', marginBottom: '1.4rem' }}>{mfa ? 'Verification code' : 'Sign in'}</h2>
-          {err && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{err}</div>}
-          {!mfa ? <>
-            <div className="field"><label htmlFor="li">Login ID</label><input id="li" type="text" autoComplete="username" required value={loginId} onChange={(e) => setLoginId(e.target.value)} autoCapitalize="none" /></div>
-            <div className="field"><label htmlFor="pw">Password</label><input id="pw" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-          </> : <div className="field"><label htmlFor="otp">6-digit code from your authenticator app</label><input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required autoFocus value={otp} onChange={(e) => setOtp(e.target.value)} /></div>}
-          <button className="btn" style={{ width: '100%' }} disabled={busy}>{busy ? 'Signing in…' : mfa ? 'Verify' : 'Sign in'}</button>
-          <p className="muted" style={{ fontSize: '.82rem', marginTop: '1rem' }}>Forgotten your password? Ask the school office to reset it.</p>
-        </form>
+    <div className="auth-page">
+      <div className="auth-card">
+        <aside className="auth-visual">
+          {s.hero_image_url ? <img src={s.hero_image_url} alt="" /> : <div className="auth-glow" aria-hidden><i /></div>}
+          <div className="auth-shade" aria-hidden />
+          <a href="/" className="auth-brand"><span className="brand-mark" style={{ background: '#fff', color: 'var(--forest)' }}>{(s.school_name || 'S')[0]}</span><b>{s.school_name}</b></a>
+          <div className="auth-caption">
+            <h1>Welcome back</h1>
+            <p>{s.tagline || 'Everyone sees only what is theirs.'}</p>
+            <div className="glass-row">{[['01', 'Staff'], ['02', 'Parents'], ['03', 'Students']].map(([n, l], i) => <div key={n} className={'glass' + (i === 0 ? ' on' : '')}><span>{n}</span>{l}</div>)}</div>
+          </div>
+        </aside>
+        <main className="auth-form">
+          <form onSubmit={submit}>
+            <h2>{mfa ? 'Verification code' : 'Sign in to your account'}</h2>
+            <p className="sub">{mfa ? 'Enter the 6-digit code from your authenticator app.' : 'Use the login ID given to you by the school.'}</p>
+            {err && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{err}</div>}
+            {!mfa ? <>
+              <div className="field"><label htmlFor="li">Login ID</label><input id="li" type="text" autoComplete="username" required value={loginId} onChange={(e) => setLoginId(e.target.value)} autoCapitalize="none" placeholder="e.g. name@school.org" /></div>
+              <div className="field"><label htmlFor="pw">Password</label><input id="pw" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" /></div>
+            </> : <div className="field"><label htmlFor="otp">Code</label><input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required autoFocus value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" /></div>}
+            <button className="auth-btn" disabled={busy}>{busy ? 'Signing in…' : mfa ? 'Verify' : 'Sign in'}</button>
+            <p className="hint">Forgotten your password? Ask the school office to reset it.</p>
+            <p className="hint"><a href="/">← Back to the website</a></p>
+          </form>
+        </main>
       </div>
     </div>
   );
