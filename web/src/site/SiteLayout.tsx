@@ -145,11 +145,9 @@ export function SiteLayout() {
     <>
       <a className="skip" href="#main">Skip to content</a>
       <Header />
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.main id="main" key={loc.pathname} initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0 }} transition={{ duration: 0.35, ease: [0.22, 0.8, 0.24, 1] }}>
-          <Outlet />
-        </motion.main>
-      </AnimatePresence>
+      <motion.main id="main" key={loc.pathname} initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 0.8, 0.24, 1] }}>
+        <Outlet />
+      </motion.main>
       <Footer />
     </>
   );

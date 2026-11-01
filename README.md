@@ -30,3 +30,10 @@ The server serves the built website and API on one port. See `docs/DEPLOYMENT.md
 
 ## Tests
 `createdb school_test` (owner `school`), then `npm test`. Covers login, lockout, CSRF, role permissions, public data exposure, consent capture and upload validation.
+
+## Demo data
+To explore every screen with fictional data, use an **empty, separate** database:
+```bash
+DATABASE_URL=postgres://… npm run seed:demo
+```
+It creates 8 classes, 16 sections, 16 staff, ~70 students and three teacher logins (`teacher1`–`teacher3`, password `Demo-Pass-2026`). Never run it on the real school database; it refuses if students already exist.

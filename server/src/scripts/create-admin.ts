@@ -19,7 +19,7 @@ async function main() {
     `insert into users (login_id, display_name, email, password_hash) values ($1::citext,$2,$3::citext,$4) returning id`,
     [loginId, name, loginId.includes('@') ? loginId : null, await hashPassword(pw)]);
   await query('insert into user_roles values ($1,$2)', [u.rows[0].id, role]);
-  await query("insert into audit_logs (user_id, action, entity, entity_id) values ($1,'user.bootstrap','user',$1::text)", [u.rows[0].id]);
+  await query("insert into audit_logs (user_id, action, entity, entity_id) values ($1,'user.bootstrap','user',$2)", [u.rows[0].id, String(u.rows[0].id)]);
   console.log('Super Admin created. You can now sign in.');
 }
 main().catch((e) => { console.error(e.message); process.exitCode = 1; }).finally(() => pool.end());

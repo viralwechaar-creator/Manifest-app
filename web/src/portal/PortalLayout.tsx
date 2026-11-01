@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { Loading } from '../components/States';
@@ -52,6 +52,10 @@ export function PortalLayout() {
       <aside className={'side' + (open ? ' open' : '')} aria-label="Portal navigation">
         <Link to="/portal" className="brand-row"><span className="brand-mark" style={{ background: 'var(--paper)', color: 'var(--forest)' }}>{(s.school_name || 'S')[0]}</span><span><b>{s.school_name}</b><small>Staff portal</small></span></Link>
         {link('/portal', 'Dashboard', true)}
+        {(can('students.view') || can('staff.view')) && <h5>School</h5>}
+        {can('students.view') && link('/portal/students', 'Students')}
+        {can('staff.view') && link('/portal/staff', 'Teachers & staff')}
+        {(can('academics.manage') || can('staff.view')) && link('/portal/academics', 'Academic setup')}
         {can('enquiries.manage') && <><h5>Inbox</h5>{link('/portal/inbox/enquiries', 'Admission enquiries')}{link('/portal/inbox/messages', 'Contact messages')}</>}
         {can('cms.manage') && Object.entries(groups).map(([g, items]) => <div key={g}><h5>{g === 'Pages' ? 'Website' : g}</h5>{items.map((e) => link(`/portal/content/${e.key}`, e.label))}</div>)}
         {can('settings.manage') && <><h5>Website</h5>{link('/portal/settings', 'Site settings')}</>}
@@ -71,11 +75,10 @@ export function PortalLayout() {
           <button className="btn ghost sm" onClick={async () => { clearSchemaCache(); await signOut(); }}>Sign out</button>
         </header>
         {open && <div style={{ position: 'fixed', inset: 0, zIndex: 60 }} onClick={() => setOpen(false)} aria-hidden />}
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={loc.pathname} className="pcontent" initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0 }} transition={{ duration: 0.25 }}>
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        {/* Keyed wrapper: each page fades in once. (An exit animation would mount the next page twice.) */}
+        <motion.div key={loc.pathname} className="pcontent" initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+          <Outlet />
+        </motion.div>
       </div>
     </div>
   );

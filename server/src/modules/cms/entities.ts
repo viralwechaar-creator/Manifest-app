@@ -162,6 +162,7 @@ export const SETTINGS_FIELDS: (Field & { group: string })[] = [
   { group: 'School', name: 'school_name', label: 'School name', type: 'text', required: true },
   { group: 'School', name: 'tagline', label: 'Tagline', type: 'text' },
   { group: 'School', name: 'logo_url', label: 'Logo', type: 'image' },
+  { group: 'School', name: 'student_id_format', label: 'Student ID format', type: 'text', max: 30, help: 'Use {YYYY} for the admission year and {NNNN} for the running number. Example: {YYYY}-{NNNN} gives 2026-0001. Changing it affects new students only.' },
   { group: 'Contact', name: 'address', label: 'Address', type: 'longtext', max: 400 },
   { group: 'Contact', name: 'phone', label: 'Phone', type: 'text', max: 40 },
   { group: 'Contact', name: 'email', label: 'Email', type: 'text', max: 120 },

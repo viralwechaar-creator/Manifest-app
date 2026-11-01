@@ -5,6 +5,7 @@ import { requirePermission } from '../../middleware/auth';
 import { asyncH, HttpError } from '../../middleware/errors';
 import { Entity, entityByKey, ENTITIES, schemaFor, SETTINGS_FIELDS, zodFor } from './entities';
 import { z } from 'zod';
+import { validateFormat } from '../school/studentId';
 
 export const cmsRouter = Router();
 
@@ -127,6 +128,10 @@ cmsRouter.put('/settings', requirePermission('settings.manage'), asyncH(async (r
   const data = z.object(shape).strict().parse(req.body) as Record<string, string>;
   if (data.school_name !== undefined && !data.school_name.trim()) throw new HttpError(400, 'School name is required.', { school_name: 'Required' });
   if (data.enquiry_retention_days !== undefined && !/^\d{1,5}$/.test(data.enquiry_retention_days)) throw new HttpError(400, 'Enter a whole number of days.', { enquiry_retention_days: 'Whole number' });
+  if (data.student_id_format !== undefined) {
+    const bad = validateFormat(data.student_id_format);
+    if (bad) throw new HttpError(400, bad, { student_id_format: bad });
+  }
   for (const [k, v] of Object.entries(data)) {
     await query(
       `insert into site_settings (key, value, updated_by) values ($1,$2,$3)

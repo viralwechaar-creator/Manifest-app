@@ -16,6 +16,9 @@ import { inboxRouter } from './modules/inbox';
 import { staffRouter } from './modules/staff';
 import { PUBLIC_DIR, uploadsRouter } from './modules/uploads';
 import { usersRouter } from './modules/users';
+import { academicsRouter } from './modules/school/academics';
+import { staffRouter2 } from './modules/school/staff';
+import { studentsRouter } from './modules/school/students';
 
 export function createApp() {
   const app = express();
@@ -54,6 +57,9 @@ export function createApp() {
   api.use('/admin/uploads', uploadsRouter);
   api.use('/admin/inbox', inboxRouter);
   api.use('/admin/users', usersRouter);
+  api.use('/admin/school', academicsRouter);
+  api.use('/admin/school/staff', staffRouter2);
+  api.use('/admin/school/students', studentsRouter);
   api.use('/admin', staffRouter);
   api.use(notFound);
   app.use('/api', api);

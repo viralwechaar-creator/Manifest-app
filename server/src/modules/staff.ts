@@ -21,12 +21,37 @@ staffRouter.get('/dashboard', requirePermission('dashboard.view'), asyncH(async 
     await one('galleryPhotos', "select count(*)::int n from gallery_items where published");
   }
   if (can.includes('users.manage')) await one('activeUsers', "select count(*)::int n from users where status='active'");
+  const school: any = {};
+  if (can.includes('students.view_all')) {
+    school.studentsByStatus = (await query("select status, count(*)::int n from students group by status order by n desc")).rows;
+    school.studentsByClass = (await query(
+      `select c.id as class_id, c.name, count(s.id)::int as n
+         from classes c left join sections sec on sec.class_id=c.id and sec.academic_year_id = (select id from academic_years where is_current)
+         left join students s on s.section_id=sec.id and s.status='active' group by c.id order by c.level`)).rows;
+    school.gender = (await query("select gender, count(*)::int n from students where status='active' group by gender")).rows;
+    school.sectionLoad = (await query(
+      `select c.name || ' ' || sec.name as label, sec.id, sec.capacity, count(s.id)::int as n
+         from sections sec join classes c on c.id=sec.class_id left join students s on s.section_id=sec.id and s.status='active'
+        where sec.academic_year_id = (select id from academic_years where is_current) group by sec.id, c.name, c.level order by c.level, sec.name`)).rows;
+    out.totalStudents = (await query("select count(*)::int n from students where status='active'")).rows[0].n;
+    out.newAdmissionsThisMonth = (await query("select count(*)::int n from students where created_at >= date_trunc('month', now())")).rows[0].n;
+  }
+  if (can.includes('staff.view')) {
+    out.totalStaff = (await query("select count(*)::int n from staff where status <> 'left'")).rows[0].n;
+    out.teachers = (await query("select count(*)::int n from staff where kind='teacher' and status <> 'left'")).rows[0].n;
+    out.staffOnLeave = (await query("select count(*)::int n from staff where status='on_leave'")).rows[0].n;
+    school.staffByDepartment = (await query(
+      `select coalesce(d.name, 'No department') as name, d.id, count(s.id)::int n from staff s left join departments d on d.id=s.department_id
+        where s.status <> 'left' group by d.id, d.name order by n desc`)).rows;
+  }
+  const recent = can.includes('audit.view')
+    ? (await query(`select a.at, a.action, a.entity, u.display_name as user_name from audit_logs a left join users u on u.id=a.user_id order by a.at desc limit 8`)).rows : [];
   const trend = can.includes('enquiries.manage')
     ? (await query(`select to_char(d, 'YYYY-MM-DD') as day, count(e.id)::int as count
                       from generate_series(current_date - 29, current_date, '1 day') d
                       left join admission_enquiries e on e.created_at::date = d::date group by d order by d`)).rows
     : [];
-  res.json({ counts: out, enquiryTrend: trend });
+  res.json({ counts: out, enquiryTrend: trend, school, recent });
 }));
 
 staffRouter.get('/audit', requirePermission('audit.view'), asyncH(async (req, res) => {

@@ -34,7 +34,7 @@ Super Admin, School Admin, Principal, Department Head, Teacher, Student, Parent,
 |---|---|---|
 | 1 | Foundation: stack, schema, auth, RBAC, design system, routing | Done |
 | 2 | Public website + editable content, gallery, calendar, enquiry/contact forms | Done (online application form arrives in Phase 6) |
-| 3 | Students, teachers, classes/sections, subjects, academic years, departments, admin dashboard | Next |
+| 3 | Students, teachers, classes/sections, subjects, academic years, departments, admin dashboard | Done (student ID issued on registration, reused by admissions in Phase 6) |
 | 4 | Attendance, timetables, homework, assignments, exams, results, report cards, analytics | |
 | 5 | Student and parent portals (student-ID login, child linking, row-level access) | |
 | 6 | Online admission workflow, fees, payments, receipts, concessions, refunds, reports | |
