@@ -7,6 +7,7 @@ export default defineConfig({
       APP_SECRET: 'a'.repeat(64),
       STORAGE_DIR: './storage-test',
       LOGIN_RATE_LIMIT: '5000',
+      API_RATE_LIMIT: '1000000',
     },
     fileParallelism: false,
     testTimeout: 20000,

@@ -56,7 +56,7 @@ export function createApp() {
   app.use('/uploads', express.static(PUBLIC_DIR, { index: false, dotfiles: 'deny', maxAge: '7d', setHeaders: (r) => r.setHeader('X-Content-Type-Options', 'nosniff') }));
 
   const api = express.Router();
-  api.use(rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true, legacyHeaders: false }));
+  api.use(rateLimit({ windowMs: 60_000, limit: config.API_RATE_LIMIT, standardHeaders: true, legacyHeaders: false }));
   api.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   api.use(loadSession);
   api.use(csrfProtection);
@@ -98,4 +98,18 @@ export function createApp() {
   app.use(notFound);
   app.use(errorHandler);
   return app;
+}
+
+/** Every route the app answers, as "METHOD /path". Used by tests to prove each protected route is guarded. */
+export function listRoutes(app: any): { method: string; path: string }[] {
+  const out: { method: string; path: string }[] = [];
+  const mount = (layer: any) => layer.regexp.source.replace('^', '').replace('\\/?(?=\\/|$)', '').replace(/\\\//g, '/');
+  const walk = (stack: any[], prefix: string) => {
+    for (const l of stack) {
+      if (l.route) for (const m of Object.keys(l.route.methods)) out.push({ method: m.toUpperCase(), path: prefix + l.route.path });
+      else if (l.name === 'router' && l.handle?.stack) walk(l.handle.stack, prefix + mount(l));
+    }
+  };
+  walk(app._router.stack, '');
+  return out;
 }
