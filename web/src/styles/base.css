@@ -21,6 +21,7 @@
   --r-sm: 14px;
   --shadow: 0 2px 4px rgba(45, 90, 71, .05), 0 14px 36px rgba(45, 90, 71, .10);
   --sand: #e8d6ac;
+  --card: #ffffff;
   --ease: cubic-bezier(.22, .8, .24, 1);
   --pad: clamp(1.1rem, 4vw, 3rem);
   --max: 1240px;
@@ -57,7 +58,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .field .help { font-size: .78rem; color: var(--grey); }
 .field .err { font-size: .8rem; color: var(--danger); }
 .input, .field input[type=text], .field input[type=email], .field input[type=password], .field input[type=tel], .field input[type=number], .field input[type=date], .field input[type=datetime-local], .field select, .field textarea {
-  width: 100%; padding: .7rem .85rem; border: 1px solid var(--line); border-radius: var(--r-sm); background: #fff; min-height: 44px; transition: border-color .2s, box-shadow .2s;
+  width: 100%; padding: .7rem .85rem; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); min-height: 44px; transition: border-color .2s, box-shadow .2s;
 }
 .field textarea { min-height: 110px; resize: vertical; }
 .field input:focus, .field select:focus, .field textarea:focus, .input:focus { border-color: var(--forest); box-shadow: 0 0 0 3px var(--sage-soft); outline: none; }

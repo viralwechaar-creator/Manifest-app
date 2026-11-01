@@ -10,6 +10,7 @@ import { fmtDate } from '../lib';
 import { Bell } from '../portal/Bell';
 import { clearSchemaCache } from '../portal/schema';
 import { useApi } from '../portal/ui';
+import { useTheme, useThemeToggle } from '../portal/theme';
 import { inr, MODE, Receipt } from '../portal/Receipt';
 import { useSettings } from '../site/SiteData';
 
@@ -20,7 +21,7 @@ const ordinal = (n: number) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100
 const initials = (n: string) => n.split(' ').map((x) => x[0]).slice(0, 2).join('');
 
 export function FamilyLayout() {
-  const { me, loading } = useAuth(); const { s } = useSettings(); const loc = useLocation(); const reduce = useReducedMotion();
+  useTheme(); const { me, loading } = useAuth(); const { s } = useSettings(); const loc = useLocation(); const reduce = useReducedMotion();
   const kids = useApi<{ role: string; children: Child[] }>(me ? '/family/children' : null);
   const [sel, setSel] = useState<number | null>(() => Number(localStorage.getItem('family_child')) || null);
   const [switcher, setSwitcher] = useState(false);
@@ -134,9 +135,9 @@ export function FamilyHomework() {
 }
 
 export function FamilyMore() {
-  const { role } = useChild();
+  const { role } = useChild(); const { theme, toggle } = useThemeToggle();
   const items: [string, string, string][] = [['/family/messages', 'Messages', 'Talk to your child’s teachers'], ['/family/concerns', 'Concerns', 'Raise a concern with the school'], ['/family/transport', 'Transport', 'Route, stop, timings and driver'], ['/family/library', 'Library', 'Books borrowed and due dates'], ['/family/fees', 'Fees & receipts', 'Dues, payments and receipts'], ['/family/timetable', 'Class timetable', 'Weekly periods and teachers'], ['/family/remarks', 'Teacher remarks', 'Praise and notes from teachers'], ['/family/notices', 'Notices & events', 'News from the school'], ...(role === 'parent' ? [['/family/leave', 'Apply for leave', 'Tell the school about an absence'] as [string, string, string]] : []), ['/family/account', 'My account', 'Password and two-step verification']];
-  return (<div className="stack"><h1 className="fam-h">More</h1>{items.map(([to, t, d]) => <Link key={to} to={to} className="fam-link"><span><b>{t}</b><br /><span className="muted" style={{ fontSize: '.85rem' }}>{d}</span></span><span aria-hidden>→</span></Link>)}<SignOut /></div>);
+  return (<div className="stack"><h1 className="fam-h">More</h1>{items.map(([to, t, d]) => <Link key={to} to={to} className="fam-link"><span><b>{t}</b><br /><span className="muted" style={{ fontSize: '.85rem' }}>{d}</span></span><span aria-hidden>→</span></Link>)}<button className="btn ghost" onClick={toggle}>{theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</button><SignOut /></div>);
 }
 function SignOut() { const { signOut } = useAuth(); const nav = useNavigate(); return <button className="btn ghost" onClick={async () => { clearSchemaCache(); await signOut(); nav('/login'); }}>Sign out</button>; }
 
