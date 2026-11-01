@@ -7,6 +7,8 @@ export async function migrate() {
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
   const c = await pool.connect();
   try {
+    // Only one instance may migrate at a time (several can start together on serverless hosts).
+    await c.query('select pg_advisory_lock(727001)');
     await c.query('create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())');
     const done = new Set((await c.query('select name from schema_migrations')).rows.map((r) => r.name));
     for (const f of files) {
@@ -24,6 +26,7 @@ export async function migrate() {
       }
     }
   } finally {
+    await c.query('select pg_advisory_unlock(727001)').catch(() => undefined);
     c.release();
   }
 }

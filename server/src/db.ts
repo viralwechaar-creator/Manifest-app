@@ -1,7 +1,7 @@
 import { Pool, PoolClient, QueryResultRow } from 'pg';
 import { config } from './config';
 
-export const pool = new Pool({ connectionString: config.DATABASE_URL, max: 10 });
+export const pool = new Pool({ connectionString: config.DATABASE_URL, max: config.DB_POOL_MAX, idleTimeoutMillis: 10000 });
 
 export async function query<T extends QueryResultRow = any>(text: string, params: unknown[] = []) {
   return pool.query<T>(text, params as any[]);
