@@ -75,3 +75,30 @@ describe('transport-level protections', () => {
     const r = await request(app).get('/api/public/content/news'); expect(r.headers['content-type']).toContain('application/json'); expect(r.body[0].title).toBe('<img src=x onerror=alert(1)>');
   });
 });
+
+describe('file uploads and file serving', () => {
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64)]);
+  it('needs a signed-in user with website rights', async () => {
+    expect((await request(app).post('/api/admin/uploads').attach('file', png, 'a.png')).status).toBe(401);
+    const t = await session('teach-up', 'teacher');
+    expect([401, 403]).toContain((await t.a.post('/api/admin/uploads').set(t.h).attach('file', png, 'a.png')).status);
+  });
+  it('refuses files over 10 MB and images over 5 MB', async () => {
+    const a = await session('adm-up', 'school_admin');
+    const huge = Buffer.concat([png, Buffer.alloc(11 * 1024 * 1024)]);
+    expect((await a.a.post('/api/admin/uploads').set(a.h).attach('file', huge, 'big.png')).status).toBe(413);
+    const big = Buffer.concat([png, Buffer.alloc(6 * 1024 * 1024)]);
+    expect((await a.a.post('/api/admin/uploads').set(a.h).attach('file', big, 'big.png')).status).toBe(400);
+  });
+  it('ignores the file name the user gives and stores under a random name', async () => {
+    const a = await session('adm-up2', 'school_admin');
+    const r = await a.a.post('/api/admin/uploads').set(a.h).attach('file', png, '../../etc/passwd.png');
+    expect(r.status).toBe(201); expect(r.body.url).toMatch(/^\/uploads\/[0-9a-f]{32}\.png$/);
+  });
+  it('does not serve anything outside the uploads folder', async () => {
+    for (const u of ['/uploads/../package.json', '/uploads/%2e%2e/package.json', '/uploads/..%2f..%2fserver/.env', '/uploads/private/x.pdf']) {
+      const r = await request(app).get(u); expect(r.status === 404 || r.status === 400 || r.status === 403, `${u} -> ${r.status}`).toBe(true);
+      expect(r.text).not.toMatch(/"name"|DATABASE_URL|SESSION/);
+    }
+  });
+});

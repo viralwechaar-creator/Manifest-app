@@ -172,3 +172,20 @@ describe('leave, notices, remarks and student logins', () => {
     const teacher = await login('ct'); expect((await teacher.a.post(`/api/admin/school/students/${ids.bela}/student-login`).set(teacher.h)).status).toBe(403);
   });
 });
+
+describe('no family can reach another family\'s child (automatic sweep of every child route)', () => {
+  it('answers 404 for every child-specific route when the child belongs to someone else', async () => {
+    const { listRoutes } = await import('../src/app');
+    const routes = listRoutes(app).filter((r) => r.path.startsWith('/api/family') && r.path.includes('/children/:id'));
+    expect(routes.length).toBeGreaterThanOrEqual(14);
+    const p = await parentSession(code('codeAnya')); const bad: string[] = [];
+    for (const r of routes) {
+      const url = r.path.replace(':id', String(ids.bela)).replace(/:[A-Za-z]+/g, '1');
+      const res = await (p.a as any)[r.method.toLowerCase()](url).set(r.method === 'GET' ? {} : p.h).send(r.method === 'GET' ? undefined : {});
+      if (res.status !== 404) bad.push(`${r.method} ${r.path} -> ${res.status}`);
+    }
+    expect(bad).toEqual([]);
+    // and nobody can reach a child by a non-numeric or negative ID
+    for (const weird of ['abc', '-1', '0', '1e3', '1;drop']) expect((await p.a.get(`/api/family/children/${weird}/overview`)).status).toBe(404);
+  });
+});
