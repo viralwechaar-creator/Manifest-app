@@ -8,7 +8,8 @@ import pinoHttp from 'pino-http';
 import { config } from './config';
 import { logger } from './logger';
 import { csrfProtection, loadSession } from './middleware/auth';
-import { errorHandler, notFound } from './middleware/errors';
+import { query } from './db';
+import { asyncH, errorHandler, notFound } from './middleware/errors';
 import { authRouter } from './modules/auth';
 import { cmsRouter } from './modules/cms/admin';
 import { publicRouter } from './modules/cms/public';
@@ -61,6 +62,8 @@ export function createApp() {
   api.use(loadSession);
   api.use(csrfProtection);
   api.get('/health', (_req, res) => res.json({ ok: true }));
+  // Readiness: also proves the database answers. Point uptime monitors and container health checks here.
+  api.get('/ready', asyncH(async (_req, res) => { await query('select 1'); res.json({ ok: true }); }));
   api.use('/auth', authRouter);
   api.use('/public', publicRouter);
   api.use('/admin/cms', cmsRouter);

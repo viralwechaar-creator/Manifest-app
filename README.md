@@ -37,3 +37,6 @@ To explore every screen with fictional data, use an **empty, separate** database
 DATABASE_URL=postgres://… npm run seed:demo
 ```
 It creates 8 classes, 16 sections, 28 staff, ~70 students, three teacher logins (`teacher1`–`teacher3`), a parent with two children (`2023-0013` or `2020-0019`) and a student login (`2020-0019-S`). Password for all demo logins: `Demo-Pass-2026`. Finance logins: `accounts1`, `admissions1`, `principal1`. Department logins: `transport1`, `librarian1`, `hr1`. Two sample applications (`APP-2026-0001` code `DEMOA-00001`, `APP-2026-0002` code `DEMOA-00002`) show the admission desk. Never run it on the real school database; it refuses if students already exist.
+
+## Going live
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (Docker, HTTPS, backups, monitoring) and [docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md).

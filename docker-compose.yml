@@ -1,0 +1,55 @@
+# The whole school system on one server: the app, its database, and an HTTPS front door.
+#   1. cp deploy/.env.example .env   and fill in every value
+#   2. docker compose up -d --build
+#   3. docker compose run --rm app node dist/scripts/create-admin.js   (first administrator)
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: school
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      POSTGRES_DB: school
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U school -d school"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://school:${DB_PASSWORD}@db:5432/school
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET in .env}
+      PUBLIC_ORIGIN: https://${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - files:/data/storage
+    expose:
+      - "4000"
+
+  web:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+
+volumes:
+  dbdata:
+  files:
+  caddydata:
+  caddyconfig:

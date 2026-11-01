@@ -21,6 +21,10 @@ if (!parsed.success) {
   process.exit(1);
 }
 const env = parsed.data;
+if (env.NODE_ENV === 'production' && !env.PUBLIC_ORIGIN.startsWith('https://')) {
+  console.error('PUBLIC_ORIGIN must be an https:// address in production.');
+  process.exit(1);
+}
 
 export const config = {
   ...env,

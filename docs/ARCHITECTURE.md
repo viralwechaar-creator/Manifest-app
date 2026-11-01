@@ -40,8 +40,8 @@ Super Admin, School Admin, Principal, Department Head, Teacher, Student, Parent,
 | 6 | Online admission workflow, fees, payments, receipts, concessions, refunds, reports | |
 | 7 | HR, transport, library, communication, complaints | |
 | 8 | SMS / WhatsApp / email / payment gateway integrations, scheduled reminders | needs provider accounts |
-| 9 | Full security, permission, isolation, performance and UI test pass | |
-| 10 | Production hardening, monitoring/error tracking, backups, launch checklist | |
+| 9 | Full security, permission, isolation, performance and UI test pass | Done: every route is checked automatically for sign-in and role guards; every child route is checked for family isolation; uploads, headers, injection and size limits tested; dependency audit clean; database indexes added |
+| 10 | Production hardening, monitoring/error tracking, backups, launch checklist | Done: Docker + automatic HTTPS, `/api/ready` health check, graceful shutdown, crash logging, nightly backup and restore scripts, CI, launch checklist |
 
 ## Planned schema (later phases)
 academic_years ✔ · classes, sections, subjects, class_subjects · students, guardians, student_guardians (parent↔child link used for every parent query) · staff/teachers, teacher_assignments · attendance, timetable_slots · assignments, submissions · exams, exam_subjects, results · fee_structures, fee_invoices, payments, receipts, concessions, refunds, expenses · applications, application_documents · vehicles, drivers, routes, stops, transport_assignments · books, copies, loans, fines · notices, complaints, leave_requests · documents (private storage) · consents, data_requests.

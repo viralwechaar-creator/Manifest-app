@@ -7,7 +7,7 @@ import { migrate } from '../src/migrate';
 
 const app = createApp(); const PW = 'Correct-horse-42';
 const routes = listRoutes(app).filter((r) => r.path.startsWith('/api'));
-const PUBLIC = [/^\/api\/public(\/|$)/, /^\/api\/apply(\/|$)/, /^\/api\/health$/, /^\/api\/auth\/(login|logout)$/];
+const PUBLIC = [/^\/api\/public(\/|$)/, /^\/api\/apply(\/|$)/, /^\/api\/(health|ready)$/, /^\/api\/auth\/(login|logout)$/];
 const protectedRoutes = routes.filter((r) => !PUBLIC.some((p) => p.test(r.path)));
 const fill = (p: string) => p.replace(/:[A-Za-z]+/g, '1').replace(/\/+$/, '');
 const call = (a: any, r: { method: string; path: string }, h: Record<string, string> = {}) => (a as any)[r.method.toLowerCase()](fill(r.path)).set(h).send(r.method === 'GET' || r.method === 'DELETE' ? undefined : {});
