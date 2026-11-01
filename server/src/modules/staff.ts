@@ -40,6 +40,12 @@ staffRouter.get('/dashboard', requirePermission('dashboard.view'), asyncH(async 
   }
   if (can.includes('refunds.approve')) out.refundsToApprove = (await query("select count(*)::int n from refunds where status='requested'")).rows[0].n;
   if (can.includes('admissions.review') || can.includes('admissions.view')) out.openApplications = (await query("select count(*)::int n from applications where status in ('submitted','under_review','documents_pending','verified','approved')")).rows[0].n;
+  if (can.includes('complaints.handle')) out.openComplaints = (await query("select count(*)::int n from complaints where status in ('open','in_progress') and (not confidential or $1::boolean)", [can.includes('complaints.confidential')])).rows[0].n;
+  if (can.includes('messages.use')) out.unreadMessages = (await query("select count(*)::int n from threads t join messages m on m.thread_id=t.id where t.staff_user_id=$1 and m.sender_id <> $1 and m.created_at > coalesce(t.staff_read_at,'epoch')", [req.auth!.user.id])).rows[0].n;
+  if (can.includes('library.manage')) { out.booksOut = (await query('select count(*)::int n from loans where returned_on is null')).rows[0].n; out.booksOverdue = (await query('select count(*)::int n from loans where returned_on is null and due_on < current_date')).rows[0].n; }
+  if (can.includes('transport.manage') || can.includes('transport.view')) out.studentsOnTransport = (await query('select count(*)::int n from student_transport where ended_on is null')).rows[0].n;
+  if (can.includes('hr.manage')) out.newJobApplications = (await query("select count(*)::int n from job_applications where status='new'")).rows[0].n;
+  if (can.includes('payroll.approve')) out.payrollToApprove = (await query("select count(*)::int n from payroll_runs where status='draft'")).rows[0].n;
   const school: any = {};
   if (can.includes('students.view_all')) {
     school.studentsByStatus = (await query("select status, count(*)::int n from students group by status order by n desc")).rows;

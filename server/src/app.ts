@@ -24,6 +24,10 @@ import { examsRouter } from './modules/school/exams';
 import { familyRouter } from './modules/school/family';
 import { admissionsRouter, applyRouter } from './modules/school/admissions';
 import { feesRouter } from './modules/school/fees';
+import { familyExtra, staffComplaints, staffMessages } from './modules/school/communication';
+import { hrRouter, jobsPublicRouter } from './modules/school/hr';
+import { libraryRouter } from './modules/school/library';
+import { transportRouter } from './modules/school/transport';
 import { familyAdminRouter } from './modules/school/family-admin';
 
 export function createApp() {
@@ -69,8 +73,15 @@ export function createApp() {
   api.use('/admin/school', familyAdminRouter);
   api.use('/admin/school/admissions', admissionsRouter);
   api.use('/admin/school/fees', feesRouter);
+  api.use('/admin/school/messages', staffMessages);
+  api.use('/admin/school/complaints', staffComplaints);
+  api.use('/admin/school/transport', transportRouter);
+  api.use('/admin/school/library', libraryRouter);
+  api.use('/admin/school/hr', hrRouter);
+  api.use('/apply/jobs', jobsPublicRouter);
   api.use('/apply', applyRouter);
   api.use('/family', familyRouter);
+  api.use('/family', familyExtra);
   api.use('/admin/school/staff', staffRouter2);
   api.use('/admin/school/students', studentsRouter);
   api.use('/admin', staffRouter);

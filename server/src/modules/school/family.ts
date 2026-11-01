@@ -61,7 +61,7 @@ export async function issueStudentAccount(c: PoolClient, studentId: number) {
 // ---------- The family portal API: parents and students only ----------
 export const familyRouter = Router();
 
-function familyOnly(req: Request, _res: Response, next: NextFunction) {
+export function familyOnly(req: Request, _res: Response, next: NextFunction) {
   if (!req.auth) return next(new HttpError(401, 'Please sign in.'));
   if (!req.auth.roles.some((r) => r === 'parent' || r === 'student')) return next(new HttpError(403, 'This area is for parents and students.'));
   if (req.auth.user.mustChangePassword) return next(new HttpError(403, 'You must change your password first.'));
@@ -69,8 +69,8 @@ function familyOnly(req: Request, _res: Response, next: NextFunction) {
 }
 familyRouter.use(requireAuth, familyOnly);
 
-const isParent = (req: Request) => req.auth!.roles.includes('parent');
-async function linkedIds(req: Request): Promise<number[]> {
+export const isParent = (req: Request) => req.auth!.roles.includes('parent');
+export async function linkedIds(req: Request): Promise<number[]> {
   const uid = req.auth!.user.id;
   const rows = isParent(req)
     ? (await query('select distinct s.id from students s join student_guardians sg on sg.student_id=s.id join guardians g on g.id=sg.guardian_id where g.user_id=$1', [uid])).rows
@@ -78,7 +78,7 @@ async function linkedIds(req: Request): Promise<number[]> {
   return rows.map((r) => r.id);
 }
 /** The IDOR guard: every child-specific route goes through here. A child that is not yours is simply "not found". */
-async function childOf(req: Request): Promise<number> {
+export async function childOf(req: Request): Promise<number> {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1 || !(await linkedIds(req)).includes(id)) throw new HttpError(404, 'Not found');
   return id;
