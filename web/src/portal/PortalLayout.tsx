@@ -56,6 +56,14 @@ export function PortalLayout() {
         {can('students.view') && link('/portal/students', 'Students')}
         {can('staff.view') && link('/portal/staff', 'Teachers & staff')}
         {(can('academics.manage') || can('staff.view')) && link('/portal/academics', 'Academic setup')}
+        {(can('timetable.view') || can('attendance.students.mark') || can('exams.manage') || can('marks.enter') || can('homework.manage')) && <h5>Teaching</h5>}
+        {can('timetable.view') && link('/portal/timetable', 'Timetable')}
+        {(can('attendance.students.mark') || can('attendance.students.view_all') || can('attendance.staff.view')) && link('/portal/attendance', 'Attendance')}
+        {can('homework.manage') && link('/portal/homework', 'Homework')}
+        {(can('exams.manage') || can('marks.enter') || can('results.view_all')) && link('/portal/exams', 'Exams & rankings')}
+        {(can('leave.apply') || can('substitutions.manage')) && <h5>Staff</h5>}
+        {can('leave.apply') && link('/portal/leave', 'Leave')}
+        {can('substitutions.manage') && link('/portal/substitutions', 'Substitutions')}
         {can('enquiries.manage') && <><h5>Inbox</h5>{link('/portal/inbox/enquiries', 'Admission enquiries')}{link('/portal/inbox/messages', 'Contact messages')}</>}
         {can('cms.manage') && Object.entries(groups).map(([g, items]) => <div key={g}><h5>{g === 'Pages' ? 'Website' : g}</h5>{items.map((e) => link(`/portal/content/${e.key}`, e.label))}</div>)}
         {can('settings.manage') && <><h5>Website</h5>{link('/portal/settings', 'Site settings')}</>}

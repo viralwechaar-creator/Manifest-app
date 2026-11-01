@@ -146,3 +146,19 @@ a.hrow:hover { background: var(--olive-soft); }
 .donut { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
 .donut ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; font-size: .88rem; }
 .donut li i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .5rem; }
+
+/* timetable + attendance */
+.ttgrid td { padding: .35rem; min-width: 118px; } .ttgrid tr.brk td { background: var(--paper-2); }
+.ttcell { width: 100%; min-height: 54px; border: 1px dashed var(--line); background: none; border-radius: 12px; cursor: pointer; text-align: left; padding: .4rem .6rem; transition: background .2s, border-color .2s; }
+.ttcell.on { border: 0; background: var(--olive-soft); } .ttcell:hover { background: var(--sage-soft); }
+.seg { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.segb { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: .3rem .8rem; font-size: .82rem; cursor: pointer; text-transform: capitalize; min-height: 34px; transition: background .15s; }
+.segb:hover:not(:disabled) { border-color: var(--forest); } .segb:disabled { opacity: .6; cursor: default; }
+.segb.on.present { background: var(--forest); color: #fff; border-color: var(--forest); } .segb.on.absent { background: var(--danger); color: #fff; border-color: var(--danger); }
+.segb.on.late, .segb.on.half_day { background: #d9b779; border-color: #d9b779; } .segb.on.excused, .segb.on.on_leave { background: var(--sage); border-color: var(--sage); }
+@media print { .side, .ptop, .noprint { display: none !important; } .portal { display: block; } .pcontent { padding: 0; max-width: none; } body { background: #fff; } }
+.rank { display: inline-grid; place-items: center; min-width: 30px; height: 30px; border-radius: 50%; background: var(--paper-2); font-family: var(--font-mono); font-size: .85rem; }
+.rank.top { background: var(--forest); color: #fff; }
+.rc { padding: clamp(1.2rem, 3vw, 2.2rem); } .rc-head { display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.rc-total { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .6rem; margin-top: 1rem; }
+.rc-total > div { background: var(--paper-2); border-radius: 16px; padding: .7rem .9rem; } .rc-total span { display: block; font-size: .7rem; color: var(--grey); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .06em; } .rc-total b { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; }

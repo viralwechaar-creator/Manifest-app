@@ -7,6 +7,7 @@ import { ErrorBox, Loading } from '../components/States';
 import { fmtDate } from '../lib';
 
 const LABELS: Record<string, [string, string?]> = {
+  openVacancies: ['Vacant periods today', '/portal/substitutions'], pendingLeave: ['Leave to review', '/portal/leave'], staffAbsentToday: ['Staff absent today', '/portal/attendance'], studentsPresentPct: ['Students present today (%)', '/portal/attendance'],
   totalStudents: ['Active students', '/portal/students?status=active'], newAdmissionsThisMonth: ['Admitted this month'],
   teachers: ['Teachers', '/portal/staff?kind=teacher'], totalStaff: ['Staff in total', '/portal/staff'], staffOnLeave: ['Staff on leave'],
   newEnquiries: ['New enquiries', '/portal/inbox/enquiries'], newMessages: ['Unread messages', '/portal/inbox/messages'], enquiriesThisMonth: ['Enquiries this month'],

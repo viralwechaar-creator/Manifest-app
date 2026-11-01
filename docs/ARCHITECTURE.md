@@ -35,7 +35,7 @@ Super Admin, School Admin, Principal, Department Head, Teacher, Student, Parent,
 | 1 | Foundation: stack, schema, auth, RBAC, design system, routing | Done |
 | 2 | Public website + editable content, gallery, calendar, enquiry/contact forms | Done (online application form arrives in Phase 6) |
 | 3 | Students, teachers, classes/sections, subjects, academic years, departments, admin dashboard | Done (student ID issued on registration, reused by admissions in Phase 6) |
-| 4 | Attendance, timetables, homework, assignments, exams, results, report cards, analytics | |
+| 4 | Timetable and periods, student and staff attendance, leave, vacant periods and substitutions, homework, exams, marks, class and section rankings, report cards, analytics | Done (parent and student views of this data arrive in Phase 5) |
 | 5 | Student and parent portals (student-ID login, child linking, row-level access) | |
 | 6 | Online admission workflow, fees, payments, receipts, concessions, refunds, reports | |
 | 7 | HR, transport, library, communication, complaints | |
@@ -46,3 +46,11 @@ Super Admin, School Admin, Principal, Department Head, Teacher, Student, Parent,
 ## Planned schema (later phases)
 academic_years ✔ · classes, sections, subjects, class_subjects · students, guardians, student_guardians (parent↔child link used for every parent query) · staff/teachers, teacher_assignments · attendance, timetable_slots · assignments, submissions · exams, exam_subjects, results · fee_structures, fee_invoices, payments, receipts, concessions, refunds, expenses · applications, application_documents · vehicles, drivers, routes, stops, transport_assignments · books, copies, loans, fines · notices, complaints, leave_requests · documents (private storage) · consents, data_requests.
 Parent/student/teacher data access will be enforced in SQL-level scoping (`student_id in (linked children)`, `class_id in (assigned classes)`), never by hiding UI.
+
+## Phase 4 rules worth knowing
+- A teacher cannot be booked in two classes in the same period (enforced by the database and checked with a friendly message).
+- A **vacant period** is a timetable entry whose teacher is marked absent, or has approved leave, on that date. Approving leave marks the teacher on leave for each working day (not Sundays).
+- **Substitutes** must be free that period (no own class, not absent, not already covering). They are ranked: teaches the subject, same department, fewest covers that day. The substitute is notified. Marking the teacher present later removes the now-unneeded substitution.
+- **Attendance:** the class teacher marks their own class; admins and principals can see every class. Future dates and Sundays are refused.
+- **Marks:** teachers enter marks only for sections and subjects assigned to them, never above the maximum. Publishing is blocked while any mark is missing. Once published, only administrators can correct marks (audited).
+- **Ranking:** total marks across all subjects; equal totals share a rank (1, 2, 2, 4). Only students with every subject entered are ranked; others show as pending. Ranks are given within the section and within the class, and per subject. Grade scale is a constant in `exams.ts` (A+ 90, A 80, B 70, C 60, D 50, E 40, F below) and can be made configurable.

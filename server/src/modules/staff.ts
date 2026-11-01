@@ -21,6 +21,19 @@ staffRouter.get('/dashboard', requirePermission('dashboard.view'), asyncH(async 
     await one('galleryPhotos', "select count(*)::int n from gallery_items where published");
   }
   if (can.includes('users.manage')) await one('activeUsers', "select count(*)::int n from users where status='active'");
+  if (can.includes('substitutions.manage')) {
+    out.openVacancies = (await query(
+      `select count(*)::int n from timetable_slots ts join sections sec on sec.id=ts.section_id
+        join staff_attendance a on a.staff_id=ts.staff_id and a.date=current_date and a.status in ('absent','on_leave')
+        where ts.day = extract(isodow from current_date)::int and sec.academic_year_id=(select id from academic_years where is_current)
+          and not exists (select 1 from substitutions sb where sb.slot_id=ts.id and sb.date=current_date)`)).rows[0].n;
+  }
+  if (can.includes('leave.approve')) out.pendingLeave = (await query("select count(*)::int n from leave_requests where status='pending'")).rows[0].n;
+  if (can.includes('attendance.staff.view')) out.staffAbsentToday = (await query("select count(*)::int n from staff_attendance where date=current_date and status in ('absent','on_leave')")).rows[0].n;
+  if (can.includes('attendance.students.view_all')) {
+    const r = (await query("select count(*) filter (where status in ('present','late'))::int p, count(*)::int n from student_attendance where date=current_date")).rows[0];
+    if (r.n > 0) out.studentsPresentPct = Math.round((100 * r.p) / r.n);
+  }
   const school: any = {};
   if (can.includes('students.view_all')) {
     school.studentsByStatus = (await query("select status, count(*)::int n from students group by status order by n desc")).rows;

@@ -4,6 +4,10 @@ import { ContentEdit, ContentList } from './Content';
 import { Dashboard } from './Dashboard';
 import { PortalLayout } from './PortalLayout';
 import { AcademicsPage } from './Academics';
+import { AttendancePage } from './Attendance';
+import { ExamDetail, ExamsList, HomeworkPage, ReportCard } from './Exams';
+import { LeavePage, SubstitutionsPage } from './Leave';
+import { TimetablePage } from './Timetable';
 import { StaffDetail, StaffForm, StaffList } from './Staff';
 import { StudentDetail, StudentForm, StudentsList } from './Students';
 
@@ -24,6 +28,14 @@ export default function PortalRoutes() {
         <Route path="staff/new" element={<StaffForm />} />
         <Route path="staff/:id" element={<StaffDetail />} />
         <Route path="academics" element={<AcademicsPage />} />
+        <Route path="timetable" element={<TimetablePage />} />
+        <Route path="attendance" element={<AttendancePage />} />
+        <Route path="leave" element={<LeavePage />} />
+        <Route path="substitutions" element={<SubstitutionsPage />} />
+        <Route path="exams" element={<ExamsList />} />
+        <Route path="exams/:id" element={<ExamDetail />} />
+        <Route path="report/:studentId" element={<ReportCard />} />
+        <Route path="homework" element={<HomeworkPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="audit" element={<AuditPage />} />

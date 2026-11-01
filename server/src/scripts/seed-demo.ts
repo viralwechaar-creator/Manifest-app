@@ -34,8 +34,9 @@ async function main() {
 
   // Staff: teachers per subject, plus non-teaching staff.
   const teachers: { id: number; code: string }[] = [];
-  const tnames = ['Meera Nair', 'Arun Iyer', 'Farah Khan', 'Suresh Patel', 'Lakshmi Menon', 'Rohit Das', 'Anita Reddy', 'Vikram Singh', 'Neha Joshi', 'Prakash Verma', 'Sunita Kulkarni', 'Amit Bose'];
-  const tsubs = ['ENG', 'ENG', 'HIN', 'MAT', 'MAT', 'SCI', 'SCI', 'CSC', 'SST', 'SST', 'ART', 'PED'];
+  const codes = ['ENG', 'HIN', 'MAT', 'SCI', 'CSC', 'SST', 'ART', 'PED'];
+  const tsubs = Array.from({ length: 24 }, (_, i) => codes[i % 8]);                       // three teachers per subject
+  const tnames = Array.from({ length: 24 }, (_, i) => `${[...FIRST_F, ...FIRST_M][(i * 5) % 24]} ${LAST[(i * 3) % LAST.length]}`);
   const pw = await hashPassword('Demo-Pass-2026');
   let n = 0;
   for (const [i, name] of tnames.entries()) {
@@ -65,7 +66,7 @@ async function main() {
     sections.push({ id: sid, classIdx: ci });
     for (const code of Object.keys(subj)) {
       const pool_ = teachers.filter((t) => t.code === code); if (!pool_.length) continue;
-      const t = pool_[(ci + (name === 'B' ? 1 : 0)) % pool_.length];
+      const t = pool_[(ci * 2 + (name === 'B' ? 1 : 0)) % pool_.length];
       await query('insert into teacher_assignments (staff_id, section_id, subject_id) values ($1,$2,$3) on conflict do nothing', [t.id, sid, subj[code]]);
     }
   }
@@ -85,7 +86,56 @@ async function main() {
       count++;
     }
   }
+  // ---- Phase 4 demo data: periods, timetables, attendance, exams, leave ----
+  const periodDefs: [number, string, string, string, boolean][] = [[1, 'Period 1', '08:30', '09:15', false], [2, 'Period 2', '09:15', '10:00', false], [3, 'Period 3', '10:00', '10:45', false], [4, 'Break', '10:45', '11:05', true], [5, 'Period 4', '11:05', '11:50', false], [6, 'Period 5', '11:50', '12:35', false], [7, 'Period 6', '12:35', '13:20', false]];
+  const per: { id: number; brk: boolean }[] = [];
+  for (const [n, name, a, b2, brk] of periodDefs) per.push({ id: (await query('insert into periods (number, name, starts_at, ends_at, is_break) values ($1,$2,$3,$4,$5) returning id', [n, name, a, b2, brk])).rows[0].id, brk });
+  const assign = (await query('select staff_id, section_id, subject_id from teacher_assignments order by section_id, subject_id')).rows;
+  const busy = new Set<string>(); let rot = 0;
+  for (const sec of sections) {
+    const subs = assign.filter((a) => a.section_id === sec.id);
+    for (let day = 1; day <= 6; day++) for (const p of per.filter((x) => !x.brk)) {
+      for (let k = 0; k < subs.length; k++) {
+        const a = subs[(rot + k) % subs.length];
+        if (busy.has(`${a.staff_id}-${day}-${p.id}`)) continue;
+        busy.add(`${a.staff_id}-${day}-${p.id}`);
+        await query('insert into timetable_slots (section_id, day, period_id, subject_id, staff_id) values ($1,$2,$3,$4,$5) on conflict do nothing', [sec.id, day, p.id, a.subject_id, a.staff_id]);
+        rot++; break;
+      }
+    }
+  }
+  // Ten school days of attendance, mostly present.
+  const stu = (await query("select id, section_id from students where status='active'")).rows;
+  const allStaff = (await query("select id from staff")).rows;
+  for (let back = 1, done = 0; done < 10; back++) {
+    const d = new Date(Date.now() - back * 86400000); if (d.getUTCDay() === 0) continue; done++;
+    const ds = d.toISOString().slice(0, 10);
+    for (const s of stu) await query('insert into student_attendance (student_id, date, section_id, status) values ($1,$2,$3,$4)', [s.id, ds, s.section_id, ['present', 'present', 'present', 'present', 'present', 'present', 'present', 'present', rnd(2) ? 'absent' : 'late', 'present'][rnd(10)]]);
+    for (const t of allStaff) await query('insert into staff_attendance (staff_id, date, status) values ($1,$2,$3)', [t.id, ds, rnd(25) === 0 ? 'absent' : 'present']);
+  }
+  // A unit test for every class with marks for everybody, and a published one.
+  const exam = (await query("insert into exams (name, kind, academic_year_id, starts_on) values ('Unit Test 1','unit_test',$1,current_date - 7) returning id", [year])).rows[0].id;
+  const ct = (await query("insert into exams (name, kind, academic_year_id) values ('Class test: Mathematics','class_test',$1) returning id", [year])).rows[0].id;
+  for (const cid of classIds) for (const code of ['ENG', 'MAT', 'SCI']) {
+    const xs = (await query('insert into exam_subjects (exam_id, class_id, subject_id, max_marks, pass_marks) values ($1,$2,$3,50,18) returning id', [exam, cid, subj[code]])).rows[0].id;
+    for (const s of stu.filter((x) => sections.find((q) => q.id === x.section_id && classIds[q.classIdx] === cid))) {
+      const absent = rnd(30) === 0;
+      await query('insert into marks (exam_subject_id, student_id, marks, absent) values ($1,$2,$3,$4)', [xs, s.id, absent ? null : 14 + rnd(36), absent]);
+    }
+    if (code === 'MAT') {
+      const x2 = (await query('insert into exam_subjects (exam_id, class_id, subject_id, max_marks, pass_marks) values ($1,$2,$3,20,8) returning id', [ct, cid, subj.MAT])).rows[0].id;
+      for (const s of stu.filter((x) => sections.find((q) => q.id === x.section_id && classIds[q.classIdx] === cid))) await query('insert into marks (exam_subject_id, student_id, marks) values ($1,$2,$3)', [x2, s.id, 5 + rnd(16)]);
+    }
+  }
+  await query('update exams set results_published=true where id=$1', [exam]);
+  // Next Monday: one teacher on approved leave, so a vacant period needs a substitute.
+  const nm = new Date(); nm.setUTCDate(nm.getUTCDate() + ((8 - nm.getUTCDay()) % 7 || 7)); const mon = nm.toISOString().slice(0, 10);
+  const leaveT = teachers[5].id;
+  await query("insert into leave_requests (staff_id, from_date, to_date, reason, status, decided_at) values ($1,$2,$2,'Medical appointment','approved', now())", [leaveT, mon]);
+  await query("insert into staff_attendance (staff_id, date, status, note) values ($1,$2,'on_leave','Approved leave') on conflict do nothing", [leaveT, mon]);
+  await query("insert into leave_requests (staff_id, from_date, to_date, reason) values ($1,$2,$3,'Family function')", [teachers[2].id, mon, mon]);
   console.log(`Demo data ready: 8 classes, ${sections.length} sections, ${teachers.length + 4} staff, ${count} students.`);
   console.log('Demo teacher logins: teacher1, teacher2, teacher3  |  password: Demo-Pass-2026');
+  console.log('Unit Test 1 (published) and a class test have marks; next Monday has an open vacant period.');
 }
 main().catch((e) => { console.error(e.message); process.exitCode = 1; }).finally(() => pool.end());
