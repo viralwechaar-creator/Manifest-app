@@ -1,0 +1,21 @@
+import { query } from './db';
+import { logger } from './logger';
+
+/** Deletes closed enquiries/messages (personal data) once the retention period set in Settings has passed. */
+export async function purgeExpired() {
+  const days = Number((await query("select value from site_settings where key = 'enquiry_retention_days'")).rows[0]?.value) || 365;
+  const a = await query("delete from admission_enquiries where status = 'closed' and updated_at < now() - ($1 || ' days')::interval", [String(days)]);
+  const b = await query("delete from contact_messages where status = 'closed' and updated_at < now() - ($1 || ' days')::interval", [String(days)]);
+  await query("delete from sessions where expires_at < now()");
+  await query("delete from notifications where read_at is not null and read_at < now() - interval '90 days'");
+  if (a.rowCount || b.rowCount) {
+    await query("insert into audit_logs (action, entity, details) values ('retention.purged','inbox',$1)", [JSON.stringify({ enquiries: a.rowCount, messages: b.rowCount, days })]);
+    logger.info({ enquiries: a.rowCount, messages: b.rowCount }, 'retention purge');
+  }
+}
+
+export function startJobs() {
+  const run = () => purgeExpired().catch((e) => logger.error({ err: e.message }, 'purge failed'));
+  setTimeout(run, 10_000).unref();
+  setInterval(run, 6 * 3600_000).unref();
+}

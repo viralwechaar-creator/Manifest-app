@@ -1,0 +1,32 @@
+insert into site_settings (key, value) values
+ ('school_name','Your School Name'),
+ ('tagline','Learning that shapes character'),
+ ('logo_url',''),
+ ('address',''),
+ ('phone',''),
+ ('email',''),
+ ('office_hours','Monday to Saturday, 8:00 am – 4:00 pm'),
+ ('map_url',''),
+ ('facebook_url',''),
+ ('instagram_url',''),
+ ('youtube_url',''),
+ ('hero_headline','A school where every child is known'),
+ ('hero_subtext','Small classes, thoughtful teaching and a calm campus, so that curiosity can grow into confidence.'),
+ ('hero_image_url',''),
+ ('stats',E'Students | 0\nTeachers | 0\nYears of legacy | 0\nClubs & societies | 0'),
+ ('admissions_open_text','Admissions open for the coming academic year'),
+ ('privacy_notice_version','1'),
+ ('privacy_notice_text','We use the details you submit only to respond to your request. They are visible only to authorised school staff and are deleted after the retention period set by the school. You can ask the school to correct or erase them at any time.'),
+ ('enquiry_retention_days','365');
+
+insert into pages (slug, title, subtitle, body) values
+ ('about','About us','Who we are',E'## Our story\n\nWrite the story of the school here from the admin panel: how it began, what it values, and where it is going.'),
+ ('principal','Principal''s message','','Write the principal''s message here from the admin panel.'),
+ ('vision-mission','Vision & mission','What guides us',E'## Vision\n\nDescribe the school''s vision here.\n\n## Mission\n\n- Add the mission statements here, one per line.'),
+ ('academics','Academics','How we teach',E'## Approach to learning\n\nDescribe the academic approach, assessment philosophy and support for learners here.'),
+ ('infrastructure','Infrastructure','Our campus and facilities',E'## Campus\n\nDescribe classrooms, laboratories, library, sports facilities and safety measures here.'),
+ ('admissions','Admissions','Joining our school',E'## Admission process\n\n- Submit an enquiry\n- Visit the school\n- Complete the application\n- Document verification\n- Confirmation\n\n## Eligibility\n\nList age and class eligibility here.'),
+ ('transport','Transport','Safe daily commute',E'## School transport\n\nDescribe routes, timings, safety practices and fee information here.'),
+ ('policies','Policies','How we run the school',E'## School policies\n\nSummarise key policies here, and upload full policy documents in Documents.'),
+ ('alumni','Alumni','Stay connected',E'## Alumni network\n\nExplain how former students can stay in touch with the school.'),
+ ('careers','Careers','Work with us',E'## Join our team\n\nDescribe what it is like to work at the school. Open positions are listed below.');
