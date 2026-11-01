@@ -1,5 +1,6 @@
 import { query } from './db';
 import { logger } from './logger';
+import { sendFeeReminders } from './modules/school/fees';
 
 /** Deletes closed enquiries/messages (personal data) once the retention period set in Settings has passed. */
 export async function purgeExpired() {
@@ -15,7 +16,7 @@ export async function purgeExpired() {
 }
 
 export function startJobs() {
-  const run = () => purgeExpired().catch((e) => logger.error({ err: e.message }, 'purge failed'));
+  const run = () => purgeExpired().then(() => sendFeeReminders()).catch((e) => logger.error({ err: e.message }, 'scheduled job failed'));
   setTimeout(run, 10_000).unref();
   setInterval(run, 6 * 3600_000).unref();
 }

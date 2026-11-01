@@ -7,6 +7,7 @@ import { generateTempPassword, hashPassword } from '../../lib/password';
 import { requireAuth } from '../../middleware/auth';
 import { asyncH, HttpError } from '../../middleware/errors';
 import { buildReport, computeResults, gradeOf } from './exams';
+import { buildReceipt, duesFor } from './fees';
 import { eachDate, isoDow, today } from './helpers';
 
 /** In-app notification to the parents and portal accounts of the students returned by `studentSql`. */
@@ -221,4 +222,32 @@ familyRouter.post('/children/:id/leave/:leaveId/cancel', asyncH(async (req, res)
   const r = await query("update student_leave_requests set status='cancelled' where id=$1 and student_id=$2 and status='pending'", [z.coerce.number().int().parse(req.params.leaveId), id]);
   if (!r.rowCount) throw new HttpError(404, 'No pending request found.');
   res.json({ ok: true });
+}));
+
+// ---------- Fees: dues, receipts and "I have paid" notifications ----------
+familyRouter.get('/children/:id/fees', asyncH(async (req, res) => {
+  const id = await childOf(req); const t = today();
+  const dues = (await duesFor({ query: query as any }, id)).map((r: any) => ({ id: r.id, description: r.description, dueOn: r.due_str, amount: r.gross / 100, adjustments: (r.net - r.gross) / 100, net: r.net / 100, paid: r.paid / 100, balance: r.balance / 100, overdue: r.balance > 0 && r.due_str < t }));
+  const payments = (await query("select id, receipt_no, amount::float as amount, mode, reference, to_char(paid_on,'YYYY-MM-DD') as paid_on from payments where student_id=$1 and status='valid' order by paid_on desc, id desc limit 100", [id])).rows;
+  const claims = (await query("select id, amount::float as amount, mode, reference, to_char(paid_on,'YYYY-MM-DD') as paid_on, status, decision_note from payment_claims where student_id=$1 order by created_at desc limit 20", [id])).rows;
+  const instructions = (await query("select value from site_settings where key='payment_instructions'")).rows[0]?.value ?? '';
+  const balance = dues.reduce((a, d) => a + d.balance, 0);
+  res.json({ dues, payments, claims, instructions, totals: { balance, overdue: dues.filter((d) => d.overdue).reduce((a, d) => a + d.balance, 0), paid: dues.reduce((a, d) => a + d.paid, 0), nextDue: dues.filter((d) => d.balance > 0).sort((a, b) => a.dueOn.localeCompare(b.dueOn))[0]?.dueOn ?? null } });
+}));
+familyRouter.get('/children/:id/receipts/:paymentId', asyncH(async (req, res) => {
+  const id = await childOf(req); const pid = z.coerce.number().int().positive().parse(req.params.paymentId);
+  if (!(await query("select 1 from payments where id=$1 and student_id=$2 and status='valid'", [pid, id])).rowCount) throw new HttpError(404, 'Not found'); // another family's receipt is simply not found
+  res.json(await buildReceipt(pid));
+}));
+familyRouter.post('/children/:id/claims', asyncH(async (req, res) => {
+  if (!isParent(req)) throw new HttpError(403, 'Only a parent can send payment details.');
+  const id = await childOf(req);
+  const b = z.object({ amount: z.number().positive().max(10_000_000).refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, 'Use at most two decimal places'), mode: z.enum(['cash', 'cheque', 'upi', 'bank_transfer', 'card', 'online', 'other']), reference: z.string().trim().max(80).optional(), paidOn: z.string().date(), note: z.string().trim().max(200).optional() }).parse(req.body);
+  if (b.paidOn > today()) throw new HttpError(400, 'The payment date cannot be in the future.', { paidOn: 'In the future' });
+  if (['cheque', 'upi', 'bank_transfer', 'card', 'online'].includes(b.mode) && !b.reference) throw new HttpError(400, 'Please enter the transaction or reference number so the school can match it.', { reference: 'Required' });
+  if ((await query("select count(*)::int n from payment_claims where student_id=$1 and status='pending'", [id])).rows[0].n >= 5) throw new HttpError(429, 'You already have several payments waiting for confirmation.');
+  const r = await query('insert into payment_claims (student_id, amount, mode, reference, paid_on, note, submitted_by) values ($1,$2,$3,$4,$5,$6,$7) returning id', [id, b.amount, b.mode, b.reference ?? null, b.paidOn, b.note ?? null, req.auth!.user.id]);
+  await query(`insert into notifications (user_id, title, body, link) select distinct u.id, 'Payment to confirm', $1, '/portal/finance/claims' from users u join user_roles ur on ur.user_id=u.id join role_permissions rp on rp.role_id=ur.role_id join permissions p on p.id=rp.permission_id where p.code='fees.collect' and u.status='active'`, [`₹${b.amount} via ${b.mode.replace('_', ' ')}`]);
+  await audit(req, 'payment_claim.submitted', 'student', id, { amount: b.amount });
+  res.status(201).json({ id: r.rows[0].id });
 }));

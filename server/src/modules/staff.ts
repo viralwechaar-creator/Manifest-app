@@ -34,6 +34,12 @@ staffRouter.get('/dashboard', requirePermission('dashboard.view'), asyncH(async 
     const r = (await query("select count(*) filter (where status in ('present','late'))::int p, count(*)::int n from student_attendance where date=current_date")).rows[0];
     if (r.n > 0) out.studentsPresentPct = Math.round((100 * r.p) / r.n);
   }
+  if (can.includes('fees.view')) {
+    out.collectedThisMonth = Math.round((await query("select coalesce(sum(amount),0)::float t from payments where status='valid' and paid_on >= date_trunc('month', current_date)")).rows[0].t);
+    if (can.includes('fees.collect')) out.paymentsToConfirm = (await query("select count(*)::int n from payment_claims where status='pending'")).rows[0].n;
+  }
+  if (can.includes('refunds.approve')) out.refundsToApprove = (await query("select count(*)::int n from refunds where status='requested'")).rows[0].n;
+  if (can.includes('admissions.review') || can.includes('admissions.view')) out.openApplications = (await query("select count(*)::int n from applications where status in ('submitted','under_review','documents_pending','verified','approved')")).rows[0].n;
   const school: any = {};
   if (can.includes('students.view_all')) {
     school.studentsByStatus = (await query("select status, count(*)::int n from students group by status order by n desc")).rows;

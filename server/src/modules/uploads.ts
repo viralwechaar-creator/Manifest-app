@@ -15,7 +15,7 @@ fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 fs.mkdirSync(PRIVATE_DIR, { recursive: true });
 
 // File type is decided from the file's own bytes, never from its name or declared type.
-function sniff(b: Buffer): { ext: string; kind: 'image' | 'document' } | null {
+export function sniff(b: Buffer): { ext: string; kind: 'image' | 'document' } | null {
   if (b.length > 12 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { ext: 'jpg', kind: 'image' };
   if (b.length > 12 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return { ext: 'png', kind: 'image' };
   if (b.length > 12 && b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP') return { ext: 'webp', kind: 'image' };

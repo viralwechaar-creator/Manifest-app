@@ -22,6 +22,8 @@ import { studentsRouter } from './modules/school/students';
 import { opsRouter } from './modules/school/ops';
 import { examsRouter } from './modules/school/exams';
 import { familyRouter } from './modules/school/family';
+import { admissionsRouter, applyRouter } from './modules/school/admissions';
+import { feesRouter } from './modules/school/fees';
 import { familyAdminRouter } from './modules/school/family-admin';
 
 export function createApp() {
@@ -65,6 +67,9 @@ export function createApp() {
   api.use('/admin/school', opsRouter);
   api.use('/admin/school', examsRouter);
   api.use('/admin/school', familyAdminRouter);
+  api.use('/admin/school/admissions', admissionsRouter);
+  api.use('/admin/school/fees', feesRouter);
+  api.use('/apply', applyRouter);
   api.use('/family', familyRouter);
   api.use('/admin/school/staff', staffRouter2);
   api.use('/admin/school/students', studentsRouter);
@@ -76,8 +81,10 @@ export function createApp() {
   const dist = path.resolve(__dirname, '../../web/dist');
   if (fs.existsSync(dist)) {
     app.use(express.static(dist, { index: false, maxAge: '1h' }));
-    app.get('*', (_req, res) => res.sendFile(path.join(dist, 'index.html')));
+    // Only real page routes fall back to the web app; missing files and API paths stay 404.
+    app.get('*', (req, res, next) => (req.path.startsWith('/uploads/') || req.path.startsWith('/api/') ? next() : res.sendFile(path.join(dist, 'index.html'))));
   }
+  app.use(notFound);
   app.use(errorHandler);
   return app;
 }
