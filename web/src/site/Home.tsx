@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Img } from '../components/Img';
 import { Prose } from '../components/Prose';
 import { Reveal } from '../components/Reveal';
-import { DEFAULT_HERO, fmtDate, parseStats } from '../lib';
+import { DEFAULT_HERO, DEFAULT_HERO_WIDE, fmtDate, parseStats } from '../lib';
 import { usePublic, useSettings } from './SiteData';
 
 const QUICK = [
@@ -33,7 +33,9 @@ export function Home() {
     <>
       <section className="fhero" ref={heroRef} aria-label="Welcome">
         <motion.div className="fhero-bg" style={{ y: bgY, scale: bgScale }}>
-          <img src={s.hero_image_url || DEFAULT_HERO} alt="" fetchPriority="high" />
+          {s.hero_image_url
+            ? <img src={s.hero_image_url} alt="" fetchPriority="high" />
+            : <picture><source media="(min-width: 861px)" srcSet={DEFAULT_HERO_WIDE} /><img src={DEFAULT_HERO} alt="" fetchPriority="high" /></picture>}
         </motion.div>
         <div className="fhero-shade" aria-hidden />
         <motion.div className="fhero-word" style={{ x: wordX }} aria-hidden>{name}</motion.div>
