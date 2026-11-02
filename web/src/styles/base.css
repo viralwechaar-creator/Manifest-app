@@ -80,3 +80,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
+
+/* Phones: no sideways page scroll, no double-tap zoom, and no automatic zoom into text boxes (iOS zooms any box under 16px). */
+html { touch-action: manipulation; }
+body { overflow-x: clip; }
+.panel, .bento > * { min-width: 0; }
+@media (max-width: 900px) { input, select, textarea, .input { font-size: 16px !important; } }

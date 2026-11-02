@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, qs } from '../api';
 import { fmtDate } from '../lib';
 
@@ -23,10 +23,20 @@ export function usePaged<T = any>(path: string, params: Record<string, string | 
   return { rows, total, loading, err, reload: load };
 }
 
-export function useApi<T = any>(path: string | null, deps: unknown[] = []) {
+/**
+ * Loads data from the API. When `keep` is true (use it for search boxes), the previous results stay on screen while
+ * new ones load, so the screen (and the box being typed in) is never replaced by "Loading…". Late answers from
+ * older requests are ignored.
+ */
+export function useApi<T = any>(path: string | null, deps: unknown[] = [], keep = false) {
   const [data, setData] = useState<T | null>(null); const [err, setErr] = useState('');
-  const load = useCallback(() => { if (path) api<T>(path).then(setData).catch((e) => setErr(e.message)); }, [path]); // eslint-disable-line
-  useEffect(() => { setData(null); setErr(''); load(); }, [load, ...deps]); // eslint-disable-line
+  const seq = useRef(0);
+  const load = useCallback(() => {
+    if (!path) return;
+    const id = ++seq.current;
+    api<T>(path).then((d) => { if (id === seq.current) setData(d); }).catch((e) => { if (id === seq.current) setErr(e.message); });
+  }, [path]); // eslint-disable-line
+  useEffect(() => { if (!keep || !path) setData(null); setErr(''); load(); }, [load, ...deps]); // eslint-disable-line
   return { data, err, reload: load };
 }
 

@@ -8,7 +8,8 @@ import { entityByKey } from './entities';
 
 export const publicRouter = Router();
 
-publicRouter.use((_req, res, next) => { res.set('Cache-Control', 'public, max-age=30'); next(); });
+// Same for every visitor: browsers keep it 30 s, the CDN 60 s (and serves a stale copy while refreshing). Edits show within about a minute.
+publicRouter.use((req, res, next) => { if (req.method === 'GET') res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300'); next(); });
 
 publicRouter.get('/settings', asyncH(async (_req, res) => {
   const rows = (await query('select key, value from site_settings')).rows;

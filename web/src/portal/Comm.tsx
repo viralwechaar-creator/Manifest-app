@@ -23,7 +23,7 @@ export function Conversation({ base, post, onBack, reloadList }: { base: string;
 
 export function MessagesPage() {
   const threads = useApi<any[]>('/admin/school/messages/threads'); const [open, setOpen] = useState<number | null>(null); const [sp] = useSearchParams();
-  const [nw, setNw] = useState(false); const [q, setQ] = useState(''); const found = useApi<any>(q.trim().length >= 2 ? `/admin/school/students${qs({ q })}` : null, [q]); const [f, setF] = useState<any>({ student: null, subject: '', body: '' }); const [m, setM] = useState('');
+  const [nw, setNw] = useState(false); const [q, setQ] = useState(''); const found = useApi<any>(q.trim().length >= 2 ? `/admin/school/students${qs({ q })}` : null, [q], true); const [f, setF] = useState<any>({ student: null, subject: '', body: '' }); const [m, setM] = useState('');
   useEffect(() => { const t = Number(sp.get('thread')); if (t) setOpen(t); }, [sp]);
   return (<>
     <div className="ph1"><h1>Messages</h1><button className="btn" onClick={() => { setM(''); setF({ student: null, subject: '', body: '' }); setQ(''); setNw(true); }}>New message to a parent</button></div>
@@ -43,7 +43,7 @@ const STAT = ['open', 'in_progress', 'resolved', 'closed'];
 export function ComplaintsPage() {
   const { can } = useAuth(); const handler = can('complaints.handle'); const [tab, setTab] = useState<'desk' | 'mine'>(handler ? 'desk' : 'mine');
   const [status, setStatus] = useState(''); const [cat, setCat] = useState(''); const [q, setQ] = useState('');
-  const desk = useApi<any[]>(handler ? `/admin/school/complaints${qs({ status, category: cat, q })}` : null, [status, cat, q]); const mine = useApi<any[]>('/admin/school/complaints/mine');
+  const desk = useApi<any[]>(handler ? `/admin/school/complaints${qs({ status, category: cat, q })}` : null, [status, cat, q], true); const mine = useApi<any[]>('/admin/school/complaints/mine');
   const [open, setOpen] = useState<number | null>(null); const [nw, setNw] = useState<any>(null); const [m, setM] = useState('');
   return (<>
     <div className="ph1"><h1>Complaints & concerns</h1>{can('complaints.submit') && <button className="btn" onClick={() => { setM(''); setNw({ category: 'student_conduct', subject: '', body: '', studentId: '' }); }}>Raise a concern</button>}</div>

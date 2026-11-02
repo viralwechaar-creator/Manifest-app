@@ -5,6 +5,11 @@ import { pool } from './db';
 export async function migrate() {
   const dir = path.resolve(__dirname, '../migrations');
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+  // Fast path (the common case on every restart): one query, no transaction, when nothing is pending.
+  try {
+    const applied = new Set((await pool.query('select name from schema_migrations')).rows.map((r) => r.name));
+    if (files.every((f) => applied.has(f))) return;
+  } catch { /* table not there yet: fall through to the full migration */ }
   const c = await pool.connect();
   try {
     // One transaction with a transaction-scoped lock: only one instance migrates at a time (several can start together

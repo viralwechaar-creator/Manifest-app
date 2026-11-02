@@ -22,5 +22,8 @@
       "source": "/((?!api/|uploads/).*)",
       "destination": "/index.html"
     }
+  ],
+  "regions": [
+    "bom1"
   ]
 }

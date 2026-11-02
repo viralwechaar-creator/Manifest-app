@@ -22,7 +22,7 @@ export function FinancePage() {
 
 function Collect() {
   const { can } = useAuth(); const [sp, setSp] = useSearchParams(); const sid = sp.get('student');
-  const [q, setQ] = useState(''); const found = useApi<any>(q.trim().length >= 2 ? `/admin/school/students${qs({ q })}` : null, [q]);
+  const [q, setQ] = useState(''); const found = useApi<any>(q.trim().length >= 2 ? `/admin/school/students${qs({ q })}` : null, [q], true);
   const d = useApi<any>(sid ? `/admin/school/fees/students/${sid}/dues` : null, [sid]); const years = useApi<any[]>('/admin/school/years'); const heads = useApi<any[]>('/admin/school/fees/heads');
   const [pay, setPay] = useState(false); const [f, setF] = useState<any>({ amount: '', mode: 'cash', reference: '', paidOn: today(), note: '' }); const [pick, setPick] = useState<number[]>([]); const [err, setErr] = useState('');
   const [rc, setRc] = useState<number | null>(null); const [adj, setAdj] = useState<any>(null); const [con, setCon] = useState<any>(null); const [aerr, setAerr] = useState('');
