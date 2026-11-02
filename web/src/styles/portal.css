@@ -185,10 +185,10 @@ a.hrow:hover { background: var(--olive-soft); }
 .fam-row { padding: .7rem 0; border-top: 1px solid var(--line); } .fam-row:first-of-type { border-top: 0; }
 .panel.soft { background: var(--olive-soft); border-color: transparent; }
 .fchip { display: inline-block; font-size: .75rem; padding: .2rem .7rem; border-radius: 999px; text-transform: capitalize; background: #e6e8e0; font-weight: 500; }
-.fchip.present { background: #dcebd4; color: var(--forest); } .fchip.absent { background: var(--danger-soft); color: var(--danger); } .fchip.late { background: #f5e6c4; color: #7a5a14; } .fchip.excused { background: #dfe7f0; color: #36536e; }
+.fchip.present { background: #e1e6ee; color: var(--forest); } .fchip.absent { background: var(--danger-soft); color: var(--danger); } .fchip.late { background: #f5e6c4; color: #7a5a14; } .fchip.excused { background: #dfe7f0; color: #36536e; }
 .fam-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; } .fam-cal .dow { text-align: center; font-size: .72rem; color: var(--grey); font-family: var(--font-mono); }
 .fday { aspect-ratio: 1; border-radius: 12px; display: grid; place-items: center; font-size: .85rem; background: var(--paper-2); }
-.fday.present { background: #cfe3c6; } .fday.absent { background: #f0c9c2; color: var(--danger); font-weight: 600; } .fday.late { background: #f3dfae; } .fday.excused { background: #cfdcea; }
+.fday.present { background: #dde3ec; } .fday.absent { background: #f0c9c2; color: var(--danger); font-weight: 600; } .fday.late { background: #f3dfae; } .fday.excused { background: #cfdcea; }
 .fam-result, .fam-link, .fam-pick { width: 100%; display: flex; align-items: center; gap: 1rem; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: .9rem 1rem; text-decoration: none; cursor: pointer; text-align: left; justify-content: space-between; transition: transform .2s var(--ease), box-shadow .2s; }
 .fam-result:hover, .fam-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); } .fam-pick { justify-content: flex-start; } .fam-pick.on { border-color: var(--forest); background: var(--olive-soft); }
 .ring { --p: 0; width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; flex: none; background: conic-gradient(var(--forest-2) calc(var(--p) * 1%), var(--paper-2) 0); position: relative; }
@@ -278,14 +278,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
 [data-theme="dark"] .btn.danger { background: #b34a3b; border-color: #b34a3b; color: #fff; }
 [data-theme="dark"] .field input, [data-theme="dark"] .field select, [data-theme="dark"] .field textarea, [data-theme="dark"] .input { background: var(--paper-2); color: var(--ink); border-color: var(--line); }
 [data-theme="dark"] .tbl th { background: var(--paper-2); } [data-theme="dark"] .tbl tbody tr:hover { background: var(--paper-2); }
-[data-theme="dark"] .badge { background: #2e323a; color: var(--ink); } [data-theme="dark"] .badge.on, [data-theme="dark"] .badge.active { background: #24402f; color: #a9dcc0; } [data-theme="dark"] .badge.new { background: #4a4a22; color: #e8dd9a; } [data-theme="dark"] .badge.off { background: var(--danger-soft); color: var(--danger); }
+[data-theme="dark"] .badge { background: #2e323a; color: var(--ink); } [data-theme="dark"] .badge.on, [data-theme="dark"] .badge.active { background: #2c3646; color: #c4cfe0; } [data-theme="dark"] .badge.new { background: #4a4a22; color: #e8dd9a; } [data-theme="dark"] .badge.off { background: var(--danger-soft); color: var(--danger); }
 [data-theme="dark"] .chip { background: var(--olive-soft); color: var(--forest); } [data-theme="dark"] .chip.sage { background: var(--sage-soft); }
-[data-theme="dark"] .notice { background: var(--olive-soft); border-color: #3a3f48; } [data-theme="dark"] .notice.ok { background: var(--sage-soft); border-color: #2f4a3b; color: #a9dcc0; } [data-theme="dark"] .notice.error { background: var(--danger-soft); border-color: #5c2e27; color: var(--danger); }
+[data-theme="dark"] .notice { background: var(--olive-soft); border-color: #3a3f48; } [data-theme="dark"] .notice.ok { background: var(--sage-soft); border-color: #3a4558; color: #c4cfe0; } [data-theme="dark"] .notice.error { background: var(--danger-soft); border-color: #5c2e27; color: var(--danger); }
 [data-theme="dark"] .modal, [data-theme="dark"] .pop { background: var(--card); color: var(--ink); } [data-theme="dark"] .scrim { background: rgba(0,0,0,.6); }
 [data-theme="dark"] .panel.soft, [data-theme="dark"] .fam-hero { filter: none; } [data-theme="dark"] .panel.soft { background: var(--olive-soft); }
 [data-theme="dark"] .segb { background: var(--paper-2); color: var(--ink); } [data-theme="dark"] .segb.on.present { background: #4e5b70; }
-[data-theme="dark"] .fday { background: var(--paper-2); } [data-theme="dark"] .fday.present { background: #24402f; } [data-theme="dark"] .fday.absent { background: #4a2620; } [data-theme="dark"] .fday.late { background: #4a4122; } [data-theme="dark"] .fday.excused { background: #22384a; }
-[data-theme="dark"] .fchip { background: #2e323a; color: var(--ink); } [data-theme="dark"] .fchip.present { background: #24402f; color: #a9dcc0; } [data-theme="dark"] .fchip.absent { background: var(--danger-soft); color: var(--danger); }
+[data-theme="dark"] .fday { background: var(--paper-2); } [data-theme="dark"] .fday.present { background: #2c3646; } [data-theme="dark"] .fday.absent { background: #4a2620; } [data-theme="dark"] .fday.late { background: #4a4122; } [data-theme="dark"] .fday.excused { background: #22384a; }
+[data-theme="dark"] .fchip { background: #2e323a; color: var(--ink); } [data-theme="dark"] .fchip.present { background: #2c3646; color: #c4cfe0; } [data-theme="dark"] .fchip.absent { background: var(--danger-soft); color: var(--danger); }
 [data-theme="dark"] .rank { background: var(--paper-2); } [data-theme="dark"] .bubble { background: var(--paper-2); } [data-theme="dark"] .bubble.mine { background: #4e5b70; }
 [data-theme="dark"] .hrow .hb, [data-theme="dark"] .meter { background: var(--paper-2); }
 [data-theme="dark"] .skeleton { background: linear-gradient(100deg, var(--paper-2) 30%, var(--card) 50%, var(--paper-2) 70%); }
