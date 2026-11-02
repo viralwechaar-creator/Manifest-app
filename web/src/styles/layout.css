@@ -97,3 +97,25 @@
   .toolbar > :last-child:nth-child(even) { grid-column: 1 / -1; }
   .shell .two-col > .field.wide, .fam .two-col > .field.wide { grid-column: 1 / -1; }
 }
+
+/* ---- Bottom menu on phones: sits closer to the screen edge, with a solid backing so scrolling content never shows beneath or around it ---- */
+:root { --bar-bottom: max(6px, calc(env(safe-area-inset-bottom) - 14px)); }
+@media (max-width: 1080px) { .bottombar { left: 0; right: 0; margin-inline: auto; transform: none; bottom: var(--bar-bottom); } }
+@media (max-width: 899px) { .fam-tabs { left: 0; right: 0; margin-inline: auto; transform: none; bottom: var(--bar-bottom); } }
+@media (max-width: 1080px) {
+  .bottombar::before { content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: calc(env(safe-area-inset-bottom) + 96px); background: linear-gradient(to top, var(--paper) 0, var(--paper) 64%, transparent); z-index: -1; pointer-events: none; }
+  .save-row { bottom: calc(var(--bar-bottom) + 72px); }
+}
+@media (max-width: 899px) {
+  .fam-tabs::before { content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: calc(env(safe-area-inset-bottom) + 96px); background: linear-gradient(to top, var(--paper) 0, var(--paper) 64%, transparent); z-index: -1; pointer-events: none; }
+}
+
+/* The menu's white card is drawn as its own layer, above the backing strip */
+@media (max-width: 1080px) {
+  .bottombar { background: transparent; border-color: transparent; box-shadow: none; }
+  .bottombar::after { content: ''; position: absolute; inset: 0; background: var(--card); border: 1px solid var(--line); border-radius: 26px; box-shadow: var(--shadow); z-index: -1; pointer-events: none; }
+}
+@media (max-width: 899px) {
+  .fam-tabs { background: transparent; border-color: transparent; box-shadow: none; }
+  .fam-tabs::after { content: ''; position: absolute; inset: 0; background: var(--card); border: 1px solid var(--line); border-radius: 26px; box-shadow: var(--shadow); z-index: -1; pointer-events: none; }
+}
