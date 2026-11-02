@@ -7,26 +7,27 @@ export async function migrate() {
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
   const c = await pool.connect();
   try {
-    // Only one instance may migrate at a time (several can start together on serverless hosts).
-    await c.query('select pg_advisory_lock(727001)');
+    // One transaction with a transaction-scoped lock: only one instance migrates at a time (several can start together
+    // on serverless hosts), and it also works behind connection poolers that share connections between requests.
+    await c.query('begin');
+    await c.query('select pg_advisory_xact_lock(727001)');
     await c.query('create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())');
     const done = new Set((await c.query('select name from schema_migrations')).rows.map((r) => r.name));
     for (const f of files) {
       if (done.has(f)) continue;
-      const sql = fs.readFileSync(path.join(dir, f), 'utf8');
       try {
-        await c.query('begin');
-        await c.query(sql);
+        await c.query(fs.readFileSync(path.join(dir, f), 'utf8'));
         await c.query('insert into schema_migrations (name) values ($1)', [f]);
-        await c.query('commit');
         console.log('applied', f);
       } catch (e) {
-        await c.query('rollback');
         throw new Error(`Migration ${f} failed: ${(e as Error).message}`);
       }
     }
+    await c.query('commit');
+  } catch (e) {
+    await c.query('rollback').catch(() => undefined);
+    throw e;
   } finally {
-    await c.query('select pg_advisory_unlock(727001)').catch(() => undefined);
     c.release();
   }
 }

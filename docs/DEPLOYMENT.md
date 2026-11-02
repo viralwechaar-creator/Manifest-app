@@ -56,6 +56,6 @@ Set in `docker-compose.yml` under `app → environment` if you need to change th
 Node 22 + PostgreSQL 14+ + your own HTTPS proxy: set `NODE_ENV=production`, `PORT`, `DATABASE_URL`, `APP_SECRET`, `PUBLIC_ORIGIN` (must be `https://…`), `STORAGE_DIR` (a persistent disk), then `npm ci && npm run build && npm start`. The app trusts one proxy hop. In production it refuses to start with an `http://` address or a missing secret.
 
 ## Online trial on Vercel (temporary)
-The repository also runs on Vercel for trials: `api/index.ts` is the entry point and `vercel.json` the routing. Settings needed: `DATABASE_URL` (Supabase pooler address, session mode), `APP_SECRET`, `PUBLIC_ORIGIN`, `STORAGE_DIR=/tmp/storage`, `DB_POOL_MAX=2`. Limits of the trial: uploaded files are not kept between visits and the daily reminder jobs do not run. Use the Docker setup above for the real server.
+The repository also runs on Vercel for trials: `api/index.ts` is the entry point and `vercel.json` the routing. Settings needed: `DATABASE_URL` (Supabase pooler address, **transaction mode, port 6543**; session mode, port 5432, runs out of connections), `APP_SECRET`, `PUBLIC_ORIGIN`, `STORAGE_DIR=/tmp/storage`, `DB_POOL_MAX=2`. Limits of the trial: uploaded files are not kept between visits and the daily reminder jobs do not run. Use the Docker setup above for the real server.
 
 **Demo school button (trial sites only):** set `ALLOW_DEMO_DATA=true` and a Super Admin sees "Load demo school" on the dashboard while the school has no students. Never set this on the real site.
