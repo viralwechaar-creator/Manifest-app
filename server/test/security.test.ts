@@ -102,3 +102,13 @@ describe('file uploads and file serving', () => {
     }
   });
 });
+
+describe('demo-data button safeguards', () => {
+  it('is hidden from everyone but a Super Admin, and refuses to load unless the host allows it', async () => {
+    const adm = await session('adm-demo', 'school_admin'); const sup = await session('sup-demo', 'super_admin');
+    expect((await adm.a.get('/api/admin/demo/status')).status).toBe(403);
+    expect((await adm.a.post('/api/admin/demo/load').set(adm.h).send({})).status).toBe(403);
+    expect((await sup.a.get('/api/admin/demo/status')).body).toEqual({ available: false }); // ALLOW_DEMO_DATA is not set in tests
+    expect((await sup.a.post('/api/admin/demo/load').set(sup.h).send({})).status).toBe(409);
+  });
+});

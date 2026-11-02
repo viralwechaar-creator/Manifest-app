@@ -2,6 +2,7 @@
  * Fills an EMPTY database with clearly fictional demo data so every screen can be explored.
  * Never run this on the real school database. Refuses to run if students already exist.
  *   npm run seed:demo
+ * Also used by the "Load demo school" button, which exists only when ALLOW_DEMO_DATA=true (trial sites).
  */
 import { pool, query, tx } from '../db';
 import { migrate } from '../migrate';
@@ -23,8 +24,7 @@ let seed = 7;
 const rnd = (n: number) => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >> 16) % n; };
 const pick = <T,>(a: T[]) => a[rnd(a.length)];
 
-async function main() {
-  await migrate();
+export async function seedDemo() {
   if ((await query('select count(*)::int n from students')).rows[0].n > 0) throw new Error('Database already has students. Demo data is only for an empty database.');
 
   const depts: Record<string, number> = {};
@@ -244,4 +244,6 @@ async function main() {
   console.log('Demo teacher logins: teacher1, teacher2, teacher3  |  password: Demo-Pass-2026');
   console.log('Unit Test 1 (published) and a class test have marks; next Monday has an open vacant period.');
 }
-main().catch((e) => { console.error(e.message); process.exitCode = 1; }).finally(() => pool.end());
+if (require.main === module) {
+  migrate().then(seedDemo).catch((e) => { console.error(e.message); process.exitCode = 1; }).finally(() => pool.end());
+}

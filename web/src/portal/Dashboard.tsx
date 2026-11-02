@@ -51,6 +51,25 @@ const SEVERITY: Record<string, 'urgent' | 'hot'> = { refundsToApprove: 'urgent',
 const ATTENTION = ['openVacancies', 'refundsToApprove', 'payrollToApprove', 'paymentsToConfirm', 'pendingLeave', 'openComplaints', 'openApplications', 'newEnquiries', 'newMessages', 'unreadMessages', 'newJobApplications', 'booksOverdue'];
 const ATTN_TEXT: Record<string, string> = { openVacancies: 'Vacant periods need a substitute today', refundsToApprove: 'Refunds waiting for your approval', payrollToApprove: 'Payroll waiting for your approval', paymentsToConfirm: 'Parent payments to confirm', pendingLeave: 'Leave requests to review', openComplaints: 'Open complaints', openApplications: 'Admission applications in progress', newEnquiries: 'New admission enquiries', newMessages: 'Unread contact messages', unreadMessages: 'Unread messages from parents', newJobApplications: 'New job applications', booksOverdue: 'Library books overdue' };
 
+function DemoLoader() {
+  const [show, setShow] = useState(false); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('');
+  useEffect(() => { api<{ available: boolean }>('/admin/demo/status').then((r) => setShow(r.available)).catch(() => undefined); }, []);
+  if (!show) return null;
+  const load = async () => {
+    if (!window.confirm('Fill this empty school with FICTIONAL demo students, teachers, fees and marks? This is for trying out the system only.')) return;
+    setBusy(true); setMsg('');
+    try { await api('/admin/demo/load', { method: 'POST', body: {} }); window.location.reload(); } catch (e: any) { setMsg(e.message); setBusy(false); }
+  };
+  return (
+    <section className="panel" style={{ borderColor: 'var(--sage)' }}>
+      <h2>Trial site: load a demo school</h2>
+      <p>This school is empty. Load fictional students, teachers, classes, fees and marks to explore every screen. Takes about half a minute. Only you (Super Admin) can see this.</p>
+      <button className="btn" onClick={load} disabled={busy}>{busy ? 'Loading… please wait' : 'Load demo school'}</button>
+      {msg && <p role="alert" style={{ color: 'var(--danger, #b3261e)' }}>{msg}</p>}
+    </section>
+  );
+}
+
 export function Dashboard() {
   const { me, can } = useAuth(); const reduce = useReducedMotion();
   const [d, setD] = useState<any>(null); const [err, setErr] = useState('');
@@ -65,6 +84,7 @@ export function Dashboard() {
   const hour = new Date().getHours(); const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   return (
     <div className="stack" style={{ gap: '1.1rem' }}>
+      <DemoLoader />
       <section className="dash-hero"><div style={{ position: 'relative', zIndex: 1 }}><div className="eyebrow">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1 style={{ margin: '.5rem 0 0' }}>{greet}, {me!.user.displayName.split(' ')[0]}</h1><p style={{ margin: '.4rem 0 0', color: '#dbe6d6' }}>{attention.length ? `${attention.length} thing${attention.length === 1 ? '' : 's'} need${attention.length === 1 ? 's' : ''} your attention.` : 'Nothing needs your attention right now.'}</p></div>
         {quick.length > 0 && <div className="quick">{quick.map(([, to, label]) => <Link key={to} to={to}>{label}</Link>)}</div>}</section>
       {attention.length > 0 && <section className="panel"><h2>Needs your attention</h2><div className="attn">{attention.map((k) => <Link key={k} to={(LABELS[k] ?? [])[1] ?? '/portal'} className={SEVERITY[k] ?? ''}><span>{ATTN_TEXT[k]}</span><b>{c[k]}</b></Link>)}</div></section>}

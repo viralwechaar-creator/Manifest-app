@@ -9,6 +9,7 @@ import { config } from './config';
 import { logger } from './logger';
 import { csrfProtection, loadSession } from './middleware/auth';
 import { query } from './db';
+import { demoRouter } from './modules/demo';
 import { asyncH, errorHandler, notFound } from './middleware/errors';
 import { authRouter } from './modules/auth';
 import { cmsRouter } from './modules/cms/admin';
@@ -87,6 +88,7 @@ export function createApp() {
   api.use('/family', familyExtra);
   api.use('/admin/school/staff', staffRouter2);
   api.use('/admin/school/students', studentsRouter);
+  api.use('/admin/demo', demoRouter);
   api.use('/admin', staffRouter);
   api.use(notFound);
   app.use('/api', api);

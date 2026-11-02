@@ -11,6 +11,7 @@ const schema = z.object({
   SESSION_IDLE_MINUTES: z.coerce.number().default(120),
   STORAGE_DIR: z.string().default('./storage'),
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
+  ALLOW_DEMO_DATA: z.enum(['true', 'false']).optional(), // trial sites only: shows a super-admin button that fills an empty school with fictional data
   DB_POOL_MAX: z.coerce.number().int().positive().default(10), // keep small (2-3) on serverless hosts
   API_RATE_LIMIT: z.coerce.number().int().positive().default(300), // requests per IP per minute across the API
   LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(30), // sign-in attempts per IP per 15 minutes
