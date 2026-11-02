@@ -13,6 +13,7 @@ import { useApi } from '../portal/ui';
 import { useTheme, useThemeToggle } from '../portal/theme';
 import { inr, MODE, Receipt } from '../portal/Receipt';
 import { useSettings } from '../site/SiteData';
+import { BrandMark } from '../components/BrandMark';
 
 interface Child { id: number; student_code: string; full_name: string; status: string; section: string | null; section_id: number | null }
 const Ctx = createContext<{ role: string; children: Child[]; child: Child; setChild: (id: number) => void }>(null as any);
@@ -36,7 +37,7 @@ export function FamilyLayout() {
   return (
     <div className="fam">
       <header className="fam-top">
-        <Link to="/family" className="brand" style={{ minWidth: 0 }}><span className="brand-mark">{(s.school_name || 'S')[0]}</span><span className="fam-brand"><b>{s.school_name}</b></span></Link>
+        <Link to="/family" className="brand" style={{ minWidth: 0 }}><BrandMark logoUrl={s.logo_url} /><span className="fam-brand"><b>{s.school_name}</b></span></Link>
         <div className="flex" style={{ flexWrap: 'nowrap' }}>
           {child && !onAccount && <button className="fam-child" onClick={() => list.length > 1 && setSwitcher(true)} aria-haspopup={list.length > 1 ? 'dialog' : undefined} aria-label={`Showing ${child.full_name}${list.length > 1 ? '. Change child' : ''}`}>
             <span className="av">{initials(child.full_name)}</span><span className="nm">{child.full_name.split(' ')[0]}</span>{list.length > 1 && <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>}</button>}

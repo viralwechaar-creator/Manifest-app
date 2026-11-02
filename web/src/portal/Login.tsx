@@ -5,6 +5,7 @@ import { homeFor, useAuth } from '../auth';
 import { LOGIN_ART } from '../lib';
 import { useSettings } from '../site/SiteData';
 import { clearSchemaCache } from './schema';
+import { BrandMark } from '../components/BrandMark';
 
 export function Login() {
   const { me, refresh, loading } = useAuth();
@@ -33,7 +34,7 @@ export function Login() {
         <aside className="auth-visual light">
           <img src={LOGIN_ART} alt="" />
           <div className="auth-shade" aria-hidden />
-          <a href="/" className="auth-brand"><span className="brand-mark" style={{ background: '#fff', color: 'var(--forest)' }}>{(s.school_name || 'S')[0]}</span><b>{s.school_name}</b></a>
+          <a href="/" className="auth-brand"><BrandMark logoUrl={s.logo_url} /><b>{s.school_name}</b></a>
           <div className="auth-caption">
             <h1>Welcome back</h1>
             <p>{s.tagline || 'Everyone sees only what is theirs.'}</p>

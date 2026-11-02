@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useSettings } from './SiteData';
+import { BrandMark } from '../components/BrandMark';
 
 interface NavItem { to: string; label: string }
 const GROUPS: { label: string; items: NavItem[] }[] = [
@@ -26,7 +27,7 @@ function Brand({ light }: { light?: boolean }) {
   const { s } = useSettings();
   return (
     <Link to="/" className="brand" aria-label={`${s.school_name || 'School'} home`} style={light ? { color: '#fff' } : undefined}>
-      {s.logo_url ? <img src={s.logo_url} alt="" /> : <span className="brand-mark" aria-hidden>{(s.school_name || 'S')[0]}</span>}
+      <BrandMark logoUrl={s.logo_url} />
       <span style={{ minWidth: 0 }}><b>{s.school_name || 'School'}</b></span>
     </Link>
   );

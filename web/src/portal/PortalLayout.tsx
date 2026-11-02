@@ -9,6 +9,7 @@ import { CommandPalette } from './CommandPalette';
 import { activeCategory, buildNav } from './nav';
 import { clearSchemaCache, useSchema } from './schema';
 import { useTheme } from './theme';
+import { BrandMark } from '../components/BrandMark';
 
 const ROLE_NAMES: Record<string, string> = {
   super_admin: 'Super Admin', school_admin: 'School Admin', principal: 'Principal', department_head: 'Department Head', teacher: 'Teacher',
@@ -44,7 +45,7 @@ export function PortalLayout() {
     <div className="shell">
       <a className="skip" href="#portal-main">Skip to content</a>
       <header className="shell-top">
-        <Link to="/portal" className="shell-brand" aria-label="Dashboard"><span className="brand-mark">{(s.school_name || 'S')[0]}</span><span className="sb-name"><b>{s.school_name}</b><small>Staff portal</small></span></Link>
+        <Link to="/portal" className="shell-brand" aria-label="Dashboard"><BrandMark logoUrl={s.logo_url} /><span className="sb-name"><b>{s.school_name}</b><small>Staff portal</small></span></Link>
         <nav className="pillnav" aria-label="Sections">
           {cats.map((c) => (
             <button key={c.id} className={'pn' + (c.id === shown?.id ? ' on' : '')} onClick={() => nav(c.items[0].to)} aria-current={c.id === shown?.id ? 'page' : undefined}>

@@ -1,5 +1,7 @@
 /** The picture used on the home page and sign-in screen until the school uploads its own in Site settings. */
 export const DEFAULT_HERO = '/hero.jpg';
+/** Default school logo (a leaf), shown until a logo is uploaded in Site settings. */
+export const DEFAULT_LOGO = '/logo.png';
 /** Wider campus photo used instead of DEFAULT_HERO on desktop-sized screens. */
 export const DEFAULT_HERO_WIDE = '/hero-desktop.jpg';
 /** The illustration on the sign-in screen (light picture: dark text over its white top). */

@@ -308,3 +308,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .auth-visual.light .auth-brand { color: #fff; }
   .auth-visual.light .auth-brand .brand-mark { background: #fff !important; color: var(--forest) !important; }
 }
+
+.auth-visual.light .auth-brand .brand-mark.has-logo { background: #fff !important; }
+.auth-brand .brand-mark.has-logo { padding: 10px; }
