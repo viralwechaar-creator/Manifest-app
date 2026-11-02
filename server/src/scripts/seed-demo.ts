@@ -239,6 +239,20 @@ export async function seedDemo() {
   fs.mkdirSync(path.join(PRIVATE_DIR, 'resumes'), { recursive: true });
   const opening = (await query("insert into job_openings (title, department, employment_type, description) values ('Mathematics Teacher (Class 6 to 8)','Mathematics','Full-time','Graduate with B.Ed. and 2+ years of experience. Joining next term.') returning id")).rows[0].id;
   for (const [n, email, st] of [['Priya Nambiar', 'priya.demo@example.com', 'new'], ['Arjun Rao', 'arjun.demo@example.com', 'offered']] as const) { const f = `demo-cv-${n.split(' ')[0].toLowerCase()}.pdf`; fs.writeFileSync(path.join(PRIVATE_DIR, 'resumes', f), pdf); await query("insert into job_applications (opening_id, full_name, email, phone, note, resume_stored, resume_name, status, consent_purpose, consent_notice_version) values ($1,$2,$3,'9877700000','Eight years of teaching mathematics.',$4,'cv.pdf',$5,'Consider this job application','1')", [opening, n, email, f, st]); }
+  // ---- Ecosystem samples: meetings, safety, growth, classwork ----
+  const tm = (await query("select st.id as staff_id, ta.section_id, ta.subject_id from staff st join users u on u.id=st.user_id join teacher_assignments ta on ta.staff_id=st.id where u.login_id='teacher1' order by ta.section_id limit 1")).rows[0];
+  if (tm) {
+    for (let d = 1; d <= 3; d++) for (let k = 0; k < 4; k++) await query("insert into meeting_slots (staff_id, starts_at, minutes, mode, location) values ($1, date_trunc('day', now()) + ($2 || ' days')::interval + interval '9 hours 30 minutes' + ($3 || ' minutes')::interval, 15, 'in_person', 'Staff room') on conflict do nothing", [tm.staff_id, String(d + 2), String(k * 15)]);
+    await query("insert into lesson_plans (section_id, subject_id, staff_id, planned_on, topic, objectives) values ($1,$2,$3,current_date + 1,'Revision: number patterns','Spot and continue patterns')", [tm.section_id, tm.subject_id, tm.staff_id]);
+    await query("insert into learning_materials (section_id, subject_id, staff_id, title, description, link_url) values ($1,$2,$3,'Practice worksheet links','Extra practice for this week','https://example.org/practice')", [tm.section_id, tm.subject_id, tm.staff_id]);
+  }
+  const kid = (await query("select id, section_id from students where student_code='2020-0019'")).rows[0];
+  if (kid) {
+    await query("insert into emergency_contacts (student_id, full_name, relation, phone, priority) values ($1,'Demo Neighbour','Neighbour','9800000011',1)", [kid.id]);
+    await query("insert into authorized_pickups (student_id, full_name, relation, phone, id_hint, status, decided_at) values ($1,'Demo Uncle','Uncle','9800000012','Driving licence ending 4821','approved',now()), ($1,'Demo Cousin','Cousin','9800000013',null,'pending',null)", [kid.id]);
+    await query("insert into student_activities (student_id, kind, title, level, occurred_on, result, description) values ($1,'sport','Inter-school relay','inter_school', current_date - 20, 'Silver medal','Ran the third leg'), ($1,'arts','Annual Day drama','school', current_date - 45, 'Lead role', null)", [kid.id]);
+    await query("insert into student_observations (student_id, category, note, shared_with_family) select $1,'interests','Shows a strong interest in storytelling and drama.',true", [kid.id]);
+  }
   console.log('Departments demo logins: transport1, librarian1, hr1 (password Demo-Pass-2026). principal1 can approve the draft payroll for ' + lastMonth + '.');
   console.log(`Demo data ready: 8 classes, ${sections.length} sections, ${teachers.length + 4} staff, ${count} students.`);
   console.log('Demo teacher logins: teacher1, teacher2, teacher3  |  password: Demo-Pass-2026');

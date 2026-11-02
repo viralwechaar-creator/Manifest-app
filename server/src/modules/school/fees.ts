@@ -366,4 +366,19 @@ export async function sendFeeReminders(): Promise<{ dueSoon: number; overdue: nu
   return { dueSoon, overdue };
 }
 feesRouter.post('/reminders/run', collect, asyncH(async (req, res) => { const r = await sendFeeReminders(); await audit(req, 'fees.reminders_sent', 'finance', undefined, r); res.json(r); }));
+
+// ---------- Late fees ----------
+/** Adds one late fee to each overdue charge that has not had one, using the school's settings. Off unless a late fee amount is set. */
+export async function applyLateFees(by?: string): Promise<{ applied: number; perFee: number }> {
+  const val = async (k: string) => Number((await query('select value from site_settings where key=$1', [k])).rows[0]?.value);
+  const flat = await val('late_fee_flat'); const grace = Math.max(0, (await val('late_fee_grace_days')) || 0);
+  if (!(flat > 0) || flat > 100000) return { applied: 0, perFee: 0 };
+  const rows = (await query(`select b.id, b.student_id, b.description, b.due_str from (${BAL}) b where (b.net - b.paid) > 0 and b.due_on + $1::int < current_date and not exists (select 1 from fee_adjustments a where a.charge_id=b.id and a.kind='late_fee')`, [grace])).rows;
+  for (const r of rows) {
+    await query("insert into fee_adjustments (charge_id, amount, kind, reason, created_by) values ($1,$2,'late_fee',$3,$4)", [r.id, flat, `Late fee: not paid within ${grace} day(s) of ${r.due_str}`, by ?? null]);
+    await notifyFamilies('select id from students where id=$1', [r.student_id], 'Late fee added', `${r.description}: a late fee of ₹${flat} was added because it was not paid on time.`, '/family/fees', 'fees');
+  }
+  return { applied: rows.length, perFee: flat };
+}
+feesRouter.post('/late-fees/run', collect, asyncH(async (req, res) => { const r = await applyLateFees(req.auth!.user.id); await audit(req, 'fees.late_fees_applied', 'finance', undefined, r); res.json(r); }));
 void ({} as Request);

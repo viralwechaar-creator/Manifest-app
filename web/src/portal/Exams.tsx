@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { Modal } from '../components/Modal';
@@ -142,7 +142,7 @@ export function HomeworkPage() {
   return (<>
     <div className="ph1"><h1>Homework & assignments</h1><button className="btn" onClick={() => { setFerr(null); setF({ sectionId: '', subjectId: '', kind: 'homework', title: '', description: '', dueOn: new Date(Date.now() + 86400000).toISOString().slice(0, 10) }); setOpen(true); }}>Set new work</button></div>
     {err && <ErrorBox message={err} />}
-    {!data ? <Loading /> : data.length === 0 ? <Empty>No homework set yet.</Empty> : <div className="tbl-wrap"><table className="tbl"><thead><tr><th>Due</th><th>Class</th><th>Subject</th><th>Title</th><th>Type</th><th>Set by</th><th /></tr></thead><tbody>{data.map((h) => <tr key={h.id}><td>{dt(h.due_on)}</td><td>{h.section}</td><td>{h.subject}</td><td><b>{h.title}</b>{h.description && <div className="muted" style={{ fontSize: '.8rem' }}>{h.description.slice(0, 90)}</div>}</td><td><span className="chip sage">{h.kind}</span></td><td>{h.teacher}</td><td className="act"><button className="btn ghost sm" onClick={async () => { if (confirm('Delete this?')) { try { await api(`/admin/school/homework/${h.id}`, { method: 'DELETE' }); reload(); } catch { /* shown by reload */ } } }}>Delete</button></td></tr>)}</tbody></table></div>}
+    {!data ? <Loading /> : data.length === 0 ? <Empty>No homework set yet.</Empty> : <div className="tbl-wrap"><table className="tbl"><thead><tr><th>Due</th><th>Class</th><th>Subject</th><th>Title</th><th>Type</th><th>Set by</th><th /></tr></thead><tbody>{data.map((h) => <tr key={h.id}><td>{dt(h.due_on)}</td><td>{h.section}</td><td>{h.subject}</td><td><b>{h.title}</b>{h.description && <div className="muted" style={{ fontSize: '.8rem' }}>{h.description.slice(0, 90)}</div>}</td><td><span className="chip sage">{h.kind}</span></td><td>{h.teacher}</td><td className="act"><Link className="btn ghost sm" to={`/portal/homework/${h.id}`}>Submissions</Link> <button className="btn ghost sm" onClick={async () => { if (confirm('Delete this?')) { try { await api(`/admin/school/homework/${h.id}`, { method: 'DELETE' }); reload(); } catch { /* shown by reload */ } } }}>Delete</button></td></tr>)}</tbody></table></div>}
     <Modal open={open} onClose={() => setOpen(false)} label="Set homework"><h3>Set homework or assignment</h3>{ferr && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{ferr.message}</div>}
       <div className="two-col"><Select label="Class" id="h1" value={f.sectionId} onChange={(v) => setF({ ...f, sectionId: v })} blank="Choose" options={(sections.data ?? []).map((s) => ({ value: s.id, label: `${s.class_name} ${s.name}` }))} />
         <Select label="Subject" id="h2" value={f.subjectId} onChange={(v) => setF({ ...f, subjectId: v })} blank="Choose" options={(subjects.data ?? []).map((s) => ({ value: s.id, label: s.name }))} />

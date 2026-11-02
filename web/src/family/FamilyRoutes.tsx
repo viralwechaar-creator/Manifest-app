@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { FamilyConcerns, FamilyLibrary, FamilyMessages, FamilyTransport } from './Family2';
+import { FamilyClasswork, FamilyGrowth, FamilyMeetings, FamilySafety } from './Family3';
 import { AccountPage } from '../portal/Admin';
 import { FamilyAttendance, FamilyFees, FamilyHome, FamilyHomework, FamilyLayout, FamilyLeave, FamilyMore, FamilyNotices, FamilyRemarks, FamilyResults, FamilyTimetable } from './Family';
 
@@ -21,6 +22,10 @@ export default function FamilyRoutes() {
         <Route path="remarks" element={<FamilyRemarks />} />
         <Route path="notices" element={<FamilyNotices />} />
         <Route path="leave" element={<FamilyLeave />} />
+        <Route path="safety" element={<FamilySafety />} />
+        <Route path="meetings" element={<FamilyMeetings />} />
+        <Route path="classwork" element={<FamilyClasswork />} />
+        <Route path="growth" element={<FamilyGrowth />} />
         <Route path="account" element={<div className="stack"><AccountPage /></div>} />
       </Route>
     </Routes>

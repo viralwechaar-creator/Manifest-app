@@ -44,10 +44,30 @@ export function Select({ label, value, onChange, options, id, blank = 'All', req
   return (
     <div className={'field' + (options.some((o) => String(o.label).length > 14) ? ' wide' : '')} style={label ? undefined : { margin: 0 }}>
       {label && <label htmlFor={id}>{label}{required && ' *'}</label>}
-      <select id={id} className="input" aria-label={label ?? blank ?? 'Select'} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+      <select id={id} className="input" aria-label={label || blank || 'Select'} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         {blank !== null && <option value="">{blank}</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+    </div>
+  );
+}
+
+/** Runs a request and keeps its error message for display. Returns true when it worked. */
+export function useAction() {
+  const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const run = async (fn: () => Promise<unknown>, after?: () => void) => { setErr(''); setBusy(true); try { await fn(); after?.(); return true; } catch (e) { setErr((e as ApiError).message); return false; } finally { setBusy(false); } };
+  return { err, busy, run, clear: () => setErr('') };
+}
+
+/** A labelled text, date, number or long-text box. */
+export function Field({ label, value, onChange, type = 'text', rows, help, placeholder, id, required, min, max }: { label: string; value: string | number; onChange: (v: string) => void; type?: 'text' | 'date' | 'number' | 'datetime-local' | 'tel' | 'url' | 'time'; rows?: number; help?: string; placeholder?: string; id?: string; required?: boolean; min?: string | number; max?: string | number }) {
+  const fid = id ?? 'f-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return (
+    <div className="field">
+      <label htmlFor={fid}>{label}{required && ' *'}</label>
+      {rows ? <textarea id={fid} rows={rows} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+        : <input id={fid} type={type} value={value} placeholder={placeholder} min={min} max={max} onChange={(e) => onChange(e.target.value)} />}
+      {help && <span className="help">{help}</span>}
     </div>
   );
 }

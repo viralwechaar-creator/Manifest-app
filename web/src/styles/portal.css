@@ -43,8 +43,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: .9rem; min-width:
 .tbl tbody tr:hover { background: var(--paper); }
 .tbl td.act { white-space: nowrap; text-align: right; }
 .badge { font-size: .72rem; padding: .15rem .55rem; border-radius: 999px; font-weight: 600; background: var(--grey-soft); }
-.badge.on, .badge.active, .badge.contacted, .badge.read { background: var(--sage-soft); color: var(--forest); }
-.badge.new { background: var(--olive); color: var(--forest); }
+.badge.on, .badge.active, .badge.contacted, .badge.read { background: var(--sage-soft); color: var(--forest-2); }
+.badge.new { background: var(--olive); color: var(--ink); }
 .badge.suspended, .badge.off { background: var(--danger-soft); color: var(--danger); }
 .toolbar { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
 .toolbar .input { max-width: 280px; }
@@ -184,8 +184,8 @@ a.hrow:hover { background: var(--olive-soft); }
 .fam-tile b { font-family: var(--font-display); font-weight: 300; font-size: 2.3rem; line-height: 1; color: var(--forest); }
 .fam-row { padding: .7rem 0; border-top: 1px solid var(--line); } .fam-row:first-of-type { border-top: 0; }
 .panel.soft { background: var(--olive-soft); border-color: transparent; }
-.fchip { display: inline-block; font-size: .75rem; padding: .2rem .7rem; border-radius: 999px; text-transform: capitalize; background: #e6e8e0; font-weight: 500; }
-.fchip.present { background: #e1e6ee; color: var(--forest); } .fchip.absent { background: var(--danger-soft); color: var(--danger); } .fchip.late { background: #f5e6c4; color: #7a5a14; } .fchip.excused { background: #dfe7f0; color: #36536e; }
+.fchip { display: inline-block; font-size: .75rem; padding: .2rem .7rem; border-radius: 999px; text-transform: capitalize; background: #e6e8e0; color: var(--ink); font-weight: 500; }
+.fchip.present { background: #e1e6ee; color: var(--forest-2); } .fchip.absent { background: var(--danger-soft); color: var(--danger); } .fchip.late { background: #f5e6c4; color: #7a5a14; } .fchip.excused { background: #dfe7f0; color: #36536e; }
 .fam-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; } .fam-cal .dow { text-align: center; font-size: .72rem; color: var(--grey); font-family: var(--font-mono); }
 .fday { aspect-ratio: 1; border-radius: 12px; display: grid; place-items: center; font-size: .85rem; background: var(--paper-2); }
 .fday.present { background: #dde3ec; } .fday.absent { background: #f0c9c2; color: var(--danger); font-weight: 600; } .fday.late { background: #f3dfae; } .fday.excused { background: #cfdcea; }

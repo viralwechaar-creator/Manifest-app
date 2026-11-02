@@ -10,6 +10,15 @@ import { logger } from './logger';
 import { csrfProtection, loadSession } from './middleware/auth';
 import { query } from './db';
 import { demoRouter } from './modules/demo';
+import { safetyRouter, familySafety } from './modules/school/wellbeing';
+import { meetingsRouter, familyMeetings } from './modules/school/meetings';
+import { classworkRouter, familyClasswork } from './modules/school/classwork';
+import { growthRouter, familyGrowth } from './modules/school/growth';
+import { reportsRouter } from './modules/school/reports';
+import { outboxRouter, prefsRouter, privacyRouter } from './modules/school/platform';
+import { seoRouter } from './modules/seo';
+import { refreshGrading } from './lib/grading';
+
 import { asyncH, errorHandler, notFound } from './middleware/errors';
 import { authRouter } from './modules/auth';
 import { cmsRouter } from './modules/cms/admin';
@@ -61,6 +70,7 @@ export function createApp() {
   api.use(rateLimit({ windowMs: 60_000, limit: config.API_RATE_LIMIT, standardHeaders: true, legacyHeaders: false }));
   api.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   api.use(loadSession);
+  api.use((_req, _res, next) => { refreshGrading().then(() => next(), () => next()); }); // picks up a changed grading scale within a minute
   api.use(csrfProtection);
   api.get('/health', (_req, res) => res.json({ ok: true }));
   // Readiness: also proves the database answers. Point uptime monitors and container health checks here.
@@ -86,12 +96,25 @@ export function createApp() {
   api.use('/apply', applyRouter);
   api.use('/family', familyRouter);
   api.use('/family', familyExtra);
+  api.use('/family', familySafety);
+  api.use('/family', familyMeetings);
+  api.use('/family', familyClasswork);
+  api.use('/family', familyGrowth);
   api.use('/admin/school/staff', staffRouter2);
   api.use('/admin/school/students', studentsRouter);
+  api.use('/admin/school/safety', safetyRouter);
+  api.use('/admin/school/meetings', meetingsRouter);
+  api.use('/admin/school/classwork', classworkRouter);
+  api.use('/admin/school/growth', growthRouter);
+  api.use('/admin/school/reports', reportsRouter);
+  api.use('/admin/school/privacy', privacyRouter);
+  api.use('/admin/outbox', outboxRouter);
+  api.use('/prefs', prefsRouter);
   api.use('/admin/demo', demoRouter);
   api.use('/admin', staffRouter);
   api.use(notFound);
   app.use('/api', api);
+  app.use(seoRouter);
 
   // In production the built web app is served by the same process.
   const dist = path.resolve(__dirname, '../../web/dist');

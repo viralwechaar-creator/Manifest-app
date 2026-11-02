@@ -3,6 +3,7 @@ import { query } from '../../db';
 import { audit } from '../../lib/audit';
 import { requirePermission } from '../../middleware/auth';
 import { asyncH, HttpError } from '../../middleware/errors';
+import { refreshGrading } from '../../lib/grading';
 import { Entity, entityByKey, ENTITIES, schemaFor, SETTINGS_FIELDS, zodFor } from './entities';
 import { z } from 'zod';
 import { validateFormat } from '../school/studentId';
@@ -138,6 +139,7 @@ cmsRouter.put('/settings', requirePermission('settings.manage'), asyncH(async (r
        on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = excluded.updated_by`,
       [k, v, req.auth!.user.id]);
   }
+  await refreshGrading(true);
   await audit(req, 'settings.updated', 'settings', undefined, { keys: Object.keys(data) });
   res.json({ ok: true });
 }));

@@ -15,6 +15,9 @@ import { ExamDetail, ExamsList, HomeworkPage, ReportCard } from './Exams';
 import { LeavePage, SubstitutionsPage } from './Leave';
 import { TimetablePage } from './Timetable';
 import { StaffDetail, StaffForm, StaffList } from './Staff';
+import { GatePage, IncidentsPage, PickupsPage } from './Safety';
+import { MeetingsPage, PlansPage, SubmissionsPage, SupportPage } from './Teaching2';
+import { DeliveryPage, ReportsPage } from './Reports';
 import { StudentDetail, StudentForm, StudentsList } from './Students';
 
 export default function PortalRoutes() {
@@ -42,6 +45,15 @@ export default function PortalRoutes() {
         <Route path="exams/:id" element={<ExamDetail />} />
         <Route path="report/:studentId" element={<ReportCard />} />
         <Route path="homework" element={<HomeworkPage />} />
+        <Route path="homework/:id" element={<SubmissionsPage />} />
+        <Route path="lessons" element={<PlansPage />} />
+        <Route path="meetings" element={<MeetingsPage />} />
+        <Route path="support" element={<SupportPage />} />
+        <Route path="safety/gate" element={<GatePage />} />
+        <Route path="safety/pickups" element={<PickupsPage />} />
+        <Route path="safety/incidents" element={<IncidentsPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="delivery" element={<DeliveryPage />} />
         <Route path="notices" element={<NoticesPage />} />
         <Route path="student-leave" element={<StudentLeavePage />} />
         <Route path="admissions" element={<AdmissionsList />} />

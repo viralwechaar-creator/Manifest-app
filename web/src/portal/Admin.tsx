@@ -201,6 +201,7 @@ export function AuditPage() {
 }
 
 /* ---------- My account ---------- */
+import { NotificationPrefs } from './Prefs';
 export function AccountPage() {
   const { me, refresh } = useAuth();
   const [cur, setCur] = useState(''); const [pw, setPw] = useState(''); const [pw2, setPw2] = useState('');
@@ -241,6 +242,7 @@ export function AccountPage() {
             <button className="btn" onClick={() => mfa(async () => { await api('/auth/mfa/enable', { method: 'POST', body: { otp } }); setSetup(null); setOtp(''); await refresh(); setMsg({ ok: true, t: 'Two-step verification is on.' }); })}>Turn on</button>
           </> : <button className="btn" onClick={() => mfa(async () => setSetup(await api('/auth/mfa/setup', { method: 'POST' })))}>Set up</button>}
         </div>
+        <NotificationPrefs />
       </div>
     </>
   );

@@ -17,6 +17,8 @@ import { BrandMark } from '../components/BrandMark';
 
 interface Child { id: number; student_code: string; full_name: string; status: string; section: string | null; section_id: number | null }
 const Ctx = createContext<{ role: string; children: Child[]; child: Child; setChild: (id: number) => void }>(null as any);
+import { HandIn } from './Family3';
+import { LangSwitch, t } from '../i18n';
 export const useChild = () => useContext(Ctx);
 const ordinal = (n: number) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
 const initials = (n: string) => n.split(' ').map((x) => x[0]).slice(0, 2).join('');
@@ -45,7 +47,7 @@ export function FamilyLayout() {
           <Link to="/family/account" className="iconbtn" aria-label="My account"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></Link>
         </div>
       </header>
-      <nav className="fam-tabs" aria-label="Sections">{tabs.map(([to, label, d]) => <NavLink key={to} to={to} end={to === '/family'} className="fam-tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg><span>{label}</span></NavLink>)}</nav>
+      <nav className="fam-tabs" aria-label="Sections">{tabs.map(([to, label, d]) => <NavLink key={to} to={to} end={to === '/family'} className="fam-tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg><span>{t(label)}</span></NavLink>)}</nav>
       <motion.main key={loc.pathname} className="fam-main" initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         {kids.err ? <ErrorBox message={kids.err} /> : !kids.data ? <Loading /> : !child && !onAccount ? <Empty>No students are linked to this account yet. Please contact the school office.</Empty> : <Ctx.Provider value={{ role: kids.data.role, children: list, child, setChild: (id) => { localStorage.setItem('family_child', String(id)); setSel(id); } }}><Outlet /></Ctx.Provider>}
       </motion.main>
@@ -92,7 +94,7 @@ export function FamilyAttendance() {
   const by = new Map<string, string>((data?.days ?? []).map((d: any) => [d.date, d.status]));
   return (<div className="stack"><h1 className="fam-h">Attendance</h1>{err && <ErrorBox message={err} />}
     <div className="panel"><div className="flex" style={{ justifyContent: 'space-between', marginBottom: '.8rem' }}><button className="btn ghost sm" onClick={() => shift(-1)} aria-label="Previous month">←</button><b style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem' }}>{fmtDate(month + '-01', { month: 'long', year: 'numeric' })}</b><button className="btn ghost sm" onClick={() => shift(1)} aria-label="Next month">→</button></div>
-      <div className="fam-cal" role="grid" aria-label="Attendance calendar">{['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <div key={i} className="dow">{d}</div>)}{cells.map((d, i) => d ? <div key={i} className={'fday ' + (by.get(d) ?? '')} title={`${d}: ${by.get(d) ?? 'not marked'}`}><span>{+d.slice(8)}</span></div> : <div key={i} />)}</div>
+      <div className="fam-cal" role="group" aria-label="Attendance calendar">{['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <div key={i} className="dow" aria-hidden>{d}</div>)}{cells.map((d, i) => d ? <div key={i} className={'fday ' + (by.get(d) ?? '')} role="img" aria-label={`${d}: ${by.get(d) ?? 'not marked'}`} title={`${d}: ${by.get(d) ?? 'not marked'}`}><span aria-hidden>{+d.slice(8)}</span></div> : <div key={i} aria-hidden />)}</div>
       <div className="flex" style={{ marginTop: '1rem', gap: '.5rem' }}>{['present', 'absent', 'late', 'excused'].map((s) => <span key={s} className={'fchip ' + s}>{s} {data?.totals[s] ?? 0}</span>)}</div></div>
     {data?.year.percentage != null && <div className="panel soft"><b>This academic year</b><p style={{ margin: '.3rem 0 0' }}>{data.year.percentage}% present or late ({data.year.present} of {data.year.marked} school days marked)</p></div>}</div>);
 }
@@ -128,19 +130,19 @@ function Trend({ points }: { points: { exam: string; percentage: number }[] }) {
 }
 
 export function FamilyHomework() {
-  const { child } = useChild(); const { data, err } = useApi<any[]>(`/family/children/${child.id}/homework`, [child.id]); const t = new Date().toISOString().slice(0, 10);
+  const { child } = useChild(); const { data, err, reload } = useApi<any[]>(`/family/children/${child.id}/homework`, [child.id], true); const t = new Date().toISOString().slice(0, 10);
   if (err) return <ErrorBox message={err} />; if (!data) return <Loading />;
   const up = data.filter((h) => h.due_on >= t), past = data.filter((h) => h.due_on < t).reverse();
-  const card = (h: any) => <div className="fam-row" key={h.id}><div className="flex" style={{ justifyContent: 'space-between' }}><b>{h.title}</b><span className={'chip ' + (h.kind === 'homework' ? '' : 'sage')}>{h.kind}</span></div><span className="muted" style={{ fontSize: '.85rem' }}>{h.subject} · {h.teacher} · due {dayName(h.due_on)}</span>{h.description && <p style={{ margin: '.3rem 0 0' }}>{h.description}</p>}</div>;
+  const card = (h: any) => <div className="fam-row" key={h.id}><div className="flex" style={{ justifyContent: 'space-between' }}><b>{h.title}</b><span className={'chip ' + (h.kind === 'homework' ? '' : 'sage')}>{h.kind}</span></div><span className="muted" style={{ fontSize: '.85rem' }}>{h.subject} · {h.teacher} · due {dayName(h.due_on)}</span>{h.description && <p style={{ margin: '.3rem 0 0' }}>{h.description}</p>}<HandIn homework={h} onDone={reload} /></div>;
   return (<div className="stack"><h1 className="fam-h">Homework</h1><div className="panel"><h2>Coming up</h2>{up.length ? up.map(card) : <p className="muted">Nothing due. Enjoy the break.</p>}</div>{past.length > 0 && <div className="panel soft"><h2>Recently due</h2>{past.map(card)}</div>}</div>);
 }
 
 export function FamilyMore() {
   const { role } = useChild(); const { theme, toggle } = useThemeToggle();
-  const items: [string, string, string][] = [['/family/messages', 'Messages', 'Talk to your child’s teachers'], ['/family/concerns', 'Concerns', 'Raise a concern with the school'], ['/family/transport', 'Transport', 'Route, stop, timings and driver'], ['/family/library', 'Library', 'Books borrowed and due dates'], ['/family/fees', 'Fees & receipts', 'Dues, payments and receipts'], ['/family/timetable', 'Class timetable', 'Weekly periods and teachers'], ['/family/remarks', 'Teacher remarks', 'Praise and notes from teachers'], ['/family/notices', 'Notices & events', 'News from the school'], ...(role === 'parent' ? [['/family/leave', 'Apply for leave', 'Tell the school about an absence'] as [string, string, string]] : []), ['/family/account', 'My account', 'Password and two-step verification']];
-  return (<div className="stack"><h1 className="fam-h">More</h1>{items.map(([to, t, d]) => <Link key={to} to={to} className="fam-link"><span><b>{t}</b><br /><span className="muted" style={{ fontSize: '.85rem' }}>{d}</span></span><span aria-hidden>→</span></Link>)}<button className="btn ghost" onClick={toggle}>{theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</button><SignOut /></div>);
+  const items: [string, string, string][] = [['/family/messages', 'Messages', 'Talk to your child’s teachers'], ['/family/meetings', 'Meet a teacher', 'Book a parent-teacher meeting'], ['/family/classwork', 'Classwork', 'What is being taught and shared files'], ['/family/growth', 'Beyond marks', 'Activities, achievements and teacher notes'], ['/family/safety', 'Safety', 'Pickup people, emergency contacts, arrivals'], ['/family/concerns', 'Concerns', 'Raise a concern with the school'], ['/family/transport', 'Transport', 'Route, stop, timings and driver'], ['/family/library', 'Library', 'Books borrowed and due dates'], ['/family/fees', 'Fees & receipts', 'Dues, payments and receipts'], ['/family/timetable', 'Class timetable', 'Weekly periods and teachers'], ['/family/remarks', 'Teacher remarks', 'Praise and notes from teachers'], ['/family/notices', 'Notices & events', 'News from the school'], ...(role === 'parent' ? [['/family/leave', 'Apply for leave', 'Tell the school about an absence'] as [string, string, string]] : []), ['/family/account', 'My account', 'Password and two-step verification']];
+  return (<div className="stack"><h1 className="fam-h">{t('More')}</h1>{items.map(([to, title, d]) => <Link key={to} to={to} className="fam-link"><span><b>{t(title)}</b><br /><span className="muted" style={{ fontSize: '.85rem' }}>{t(d)}</span></span><span aria-hidden>→</span></Link>)}<button className="btn ghost" onClick={toggle}>{theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</button><LangSwitch className="btn ghost" /><SignOut /></div>);
 }
-function SignOut() { const { signOut } = useAuth(); const nav = useNavigate(); return <button className="btn ghost" onClick={async () => { clearSchemaCache(); await signOut(); nav('/login'); }}>Sign out</button>; }
+function SignOut() { const { signOut } = useAuth(); const nav = useNavigate(); return <button className="btn ghost" onClick={async () => { clearSchemaCache(); await signOut(); nav('/login'); }}>{t('Sign out')}</button>; }
 
 export function FamilyTimetable() {
   const { child } = useChild(); const { data, err } = useApi<any>(`/family/children/${child.id}/timetable`, [child.id]); const D = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

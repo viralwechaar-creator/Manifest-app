@@ -23,6 +23,12 @@ function scope(req: Request, p: unknown[], alias = 's'): string {
      union select ta.section_id from teacher_assignments ta join staff st on st.user_id = $${n}::uuid where ta.staff_id = st.id)`;
 }
 
+/** Throws 404 unless the signed-in staff member may see this student (teachers: only their own classes). */
+export async function assertStudentInScope(req: Request, studentId: number) {
+  const p: unknown[] = []; const sc = scope(req, p); p.push(studentId);
+  if (!(await query(`select 1 from students s where ${sc} and s.id = $${p.length}`, p)).rowCount) throw new HttpError(404, 'Student not found');
+}
+
 studentsRouter.get('/', view, asyncH(async (req, res) => {
   const p: unknown[] = []; const where = [scope(req, p)];
   const q = String(req.query.q ?? '').trim();

@@ -87,7 +87,7 @@ applyRouter.post('/status', limiter, asyncH(async (req, res) => {
   const docs = (await query('select id, kind, original_name, status, review_note, uploaded_at from application_documents where application_id=$1 order by id', [a.id])).rows;
   const events = (await query("select at, action, note from application_events where application_id=$1 and actor <> 'internal' order by at", [a.id])).rows;
   res.json({ reference: a.reference, studentName: a.student_name, status: a.status, className: (await query('select name from classes where id=$1', [a.class_id])).rows[0]?.name, submittedAt: a.submitted_at,
-    decisionNote: ['approved', 'rejected', 'documents_pending', 'enrolled'].includes(a.status) ? a.decision_note : null, documents: docs,
+    decisionNote: ['approved', 'rejected', 'documents_pending', 'waitlisted', 'enrolled'].includes(a.status) ? a.decision_note : null, documents: docs,
     missingDocuments: need.filter((k) => !docs.some((d) => d.kind === k && d.status !== 'rejected')), canUpload: !FINAL.includes(a.status), requiredDocuments: need, events });
 }));
 
@@ -159,11 +159,11 @@ async function load(id: number, c: { query: Function } = { query }) {
 }
 
 admissionsRouter.post('/:id/action', review, asyncH(async (req, res) => {
-  const id = idp(req.params.id); const b = z.object({ action: z.enum(['start_review', 'request_documents', 'reject', 'withdraw']), note: z.string().trim().max(500).optional() }).parse(req.body);
+  const id = idp(req.params.id); const b = z.object({ action: z.enum(['start_review', 'request_documents', 'waitlist', 'reject', 'withdraw']), note: z.string().trim().max(500).optional() }).parse(req.body);
   const a = await load(id); const name = await who(req);
   if (FINAL.includes(a.status)) throw new HttpError(409, 'This application is already closed.');
-  if (['request_documents', 'reject'].includes(b.action) && !b.note) throw new HttpError(400, 'Please add a note for the applicant.', { note: 'Required' });
-  const next = { start_review: 'under_review', request_documents: 'documents_pending', reject: 'rejected', withdraw: 'withdrawn' }[b.action];
+  if (['request_documents', 'reject', 'waitlist'].includes(b.action) && !b.note) throw new HttpError(400, 'Please add a note for the applicant.', { note: 'Required' });
+  const next = { start_review: 'under_review', request_documents: 'documents_pending', waitlist: 'waitlisted', reject: 'rejected', withdraw: 'withdrawn' }[b.action];
   if (b.action === 'start_review' && a.status !== 'submitted') throw new HttpError(409, 'Review has already started.');
   await query('update applications set status=$2, decision_note=case when $3::text is not null then $3 else decision_note end, decided_by=case when $2 in (\'rejected\',\'withdrawn\') then $4::uuid else decided_by end, decided_at=case when $2 in (\'rejected\',\'withdrawn\') then now() else decided_at end where id=$1', [id, next, b.note ?? null, req.auth!.user.id]);
   await event(id, name, b.action, b.note);
@@ -191,7 +191,7 @@ admissionsRouter.post('/:id/documents/:docId/verify', review, asyncH(async (req,
 admissionsRouter.post('/:id/approve', review, asyncH(async (req, res) => {
   const id = idp(req.params.id); const b = z.object({ note: z.string().trim().max(500).optional() }).parse(req.body ?? {});
   const a = await load(id);
-  if (!['submitted', 'under_review', 'documents_pending', 'verified'].includes(a.status)) throw new HttpError(409, 'This application cannot be approved from its current status.');
+  if (!['submitted', 'under_review', 'documents_pending', 'verified', 'waitlisted'].includes(a.status)) throw new HttpError(409, 'This application cannot be approved from its current status.');
   const need = requiredDocs((await settings()).admission_required_documents);
   const docs = (await query('select kind, status from application_documents where application_id=$1', [id])).rows;
   const missing = need.filter((k) => !docs.some((d) => d.kind === k && d.status === 'verified'));

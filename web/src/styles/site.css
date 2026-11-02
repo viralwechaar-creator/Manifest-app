@@ -73,7 +73,7 @@ a.card:hover .img img { transform: scale(1.05); }
 .card .body { padding: 1.1rem 1.2rem 1.3rem; display: grid; gap: .45rem; }
 .card h3 { font-size: 1.3rem; }
 .chip { display: inline-block; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; padding: .2rem .6rem; border-radius: 999px; background: var(--olive-soft); color: var(--forest-2); width: fit-content; }
-.chip.sage { background: var(--sage-soft); }
+.chip.sage { background: var(--sage-soft); color: var(--forest-2); }
 
 /* news list on home: editorial rows */
 .rows { border-top: 1px solid var(--line); }

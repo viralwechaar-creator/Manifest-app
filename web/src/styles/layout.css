@@ -119,3 +119,7 @@
   .fam-tabs { background: transparent; border-color: transparent; box-shadow: none; }
   .fam-tabs::after { content: ''; position: absolute; inset: 0; background: var(--card); border: 1px solid var(--line); border-radius: 26px; box-shadow: var(--shadow); z-index: -1; pointer-events: none; }
 }
+
+/* Links inside soft panels need a darker blue to stay readable on the warm tint */
+.panel.soft .link-arrow, .soft .link-arrow, .panel .link-arrow { color: var(--forest-2); }
+.rankpill small { color: #fff; opacity: 1; }

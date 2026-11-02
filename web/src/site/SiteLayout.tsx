@@ -1,3 +1,4 @@
+import { LangSwitch, t } from '../i18n';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -51,24 +52,24 @@ function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => void }) 
           initial={{ clipPath: 'inset(0 0 100% 0)' }} animate={{ clipPath: 'inset(0 0 0% 0)' }} exit={{ clipPath: 'inset(0 0 100% 0)' }} transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}>
           <div className="menu-top wrap">
             <Brand light />
-            <button className="pillbtn light" onClick={onClose} aria-label="Close menu">Close <span aria-hidden>✕</span></button>
+            <button className="pillbtn light" onClick={onClose} aria-label="Close menu">{t('Close')} <span aria-hidden>✕</span></button>
           </div>
           <div className="wrap menu-body">
             <ol className="menu-groups">
               {GROUPS.map((g, i) => (
                 <motion.li key={g.label} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.06, duration: 0.5 }}>
                   <button className={i === active ? 'on' : ''} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)} aria-expanded={i === active}>
-                    <span className="num">{String(i + 1).padStart(2, '0')}</span><span className="lbl">{g.label}</span>
+                    <span className="num">{String(i + 1).padStart(2, '0')}</span><span className="lbl">{t(g.label)}</span>
                   </button>
-                  <div className="menu-sub-m" hidden={i !== active}>{g.items.map((it) => <Link key={it.to} to={it.to}>{it.label}</Link>)}</div>
+                  <div className="menu-sub-m" hidden={i !== active}>{g.items.map((it) => <Link key={it.to} to={it.to}>{t(it.label)}</Link>)}</div>
                 </motion.li>
               ))}
             </ol>
             <div className="menu-panel">
               <AnimatePresence mode="wait">
                 <motion.div key={active} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-                  <small>{GROUPS[active].label}</small>
-                  {GROUPS[active].items.map((it) => <Link key={it.to} to={it.to}>{it.label}<span aria-hidden>→</span></Link>)}
+                  <small>{t(GROUPS[active].label)}</small>
+                  {GROUPS[active].items.map((it) => <Link key={it.to} to={it.to}>{t(it.label)}<span aria-hidden>→</span></Link>)}
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -98,9 +99,9 @@ function Header() {
         <div className="wrap hdr-in">
           <Brand light={light} />
           <div className="flex" style={{ flexWrap: 'nowrap' }}>
-            <Link className={'pillbtn hide-sm' + (light ? ' light' : '')} to="/admissions/enquiry">Admission enquiry</Link>
+            <LangSwitch className={'pillbtn' + (light ? ' light' : '')} /><Link className={'pillbtn hide-sm' + (light ? ' light' : '')} to="/admissions/enquiry">{t('Admission enquiry')}</Link>
             <button className={'pillbtn' + (light ? ' light' : '')} onClick={() => setMenu(true)} aria-haspopup="dialog" aria-expanded={menu}>
-              Menu <svg width="16" height="8" viewBox="0 0 16 8" aria-hidden><path d="M0 1h16M0 7h16" stroke="currentColor" strokeWidth="1.4" /></svg>
+              {t('Menu')} <svg width="16" height="8" viewBox="0 0 16 8" aria-hidden><path d="M0 1h16M0 7h16" stroke="currentColor" strokeWidth="1.4" /></svg>
             </button>
           </div>
         </div>
@@ -123,7 +124,7 @@ function Footer() {
             {s.phone && <a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a>}
             {s.email && <a href={`mailto:${s.email}`}>{s.email}</a>}
           </div>
-          {GROUPS.slice(0, 3).map((g) => (<div key={g.label}><h4>{g.label}</h4>{g.items.map((i) => <Link key={i.to} to={i.to}>{i.label}</Link>)}</div>))}
+          {GROUPS.slice(0, 3).map((g) => (<div key={g.label}><h4>{t(g.label)}</h4>{g.items.map((i) => <Link key={i.to} to={i.to}>{t(i.label)}</Link>)}</div>))}
         </div>
         <div className="bottom">
           <span>© {new Date().getFullYear()} {s.school_name}</span>
@@ -138,7 +139,26 @@ function Footer() {
   );
 }
 
+/** Title, description, social-share tags and structured school data for search engines, kept in step with the page and the school's settings. */
+function usePageMeta() {
+  const { s } = useSettings(); const loc = useLocation();
+  useEffect(() => {
+    const meta = (sel: string, make: () => HTMLElement, attr: string, value: string) => { let el = document.head.querySelector<HTMLElement>(sel); if (!el) { el = make(); document.head.appendChild(el); } el.setAttribute(attr, value); };
+    const m = (name: string, v: string, prop = false) => meta(`meta[${prop ? 'property' : 'name'}="${name}"]`, () => { const e = document.createElement('meta'); e.setAttribute(prop ? 'property' : 'name', name); return e; }, 'content', v);
+    const name = s.school_name || 'School'; const hit = GROUPS.flatMap((g) => g.items).find((i) => i.to === loc.pathname);
+    const title = hit ? `${hit.label} · ${name}` : name; const desc = s.tagline ? `${name}: ${s.tagline}` : `${name}: admissions, academics, events and news.`;
+    document.title = title; m('description', desc); m('og:title', title, true); m('og:description', desc, true); m('og:site_name', name, true); m('og:type', 'website', true); m('og:url', location.origin + loc.pathname, true);
+    meta('link[rel="canonical"]', () => { const e = document.createElement('link'); e.rel = 'canonical'; return e; }, 'href', location.origin + loc.pathname);
+    let ld = document.getElementById('ld-school');
+    if (loc.pathname === '/' && s.school_name) {
+      if (!ld) { ld = document.createElement('script'); ld.id = 'ld-school'; ld.setAttribute('type', 'application/ld+json'); document.head.appendChild(ld); }
+      ld.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'School', name: s.school_name, description: s.tagline || undefined, url: location.origin, logo: s.logo_url ? new URL(s.logo_url, location.origin).href : location.origin + '/logo.png', telephone: s.phone || undefined, email: s.email || undefined, address: s.address ? { '@type': 'PostalAddress', streetAddress: s.address, addressCountry: 'IN' } : undefined });
+    } else ld?.remove();
+  }, [s, loc.pathname]);
+}
+
 export function SiteLayout() {
+  usePageMeta();
   const loc = useLocation();
   const reduce = useReducedMotion();
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }, [loc.pathname]);

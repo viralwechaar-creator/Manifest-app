@@ -5,6 +5,7 @@ import { homeFor, useAuth } from '../auth';
 import { LOGIN_ART } from '../lib';
 import { useSettings } from '../site/SiteData';
 import { clearSchemaCache } from './schema';
+import { LangSwitch, t } from '../i18n';
 import { BrandMark } from '../components/BrandMark';
 
 export function Login() {
@@ -36,26 +37,26 @@ export function Login() {
           <div className="auth-shade" aria-hidden />
           <a href="/" className="auth-brand"><BrandMark logoUrl={s.logo_url} /><b>{s.school_name}</b></a>
           <div className="auth-caption">
-            <h1>Welcome back</h1>
+            <h1>{t('Welcome back')}</h1>
             <p>{s.tagline || 'Everyone sees only what is theirs.'}</p>
-            <div className="glass-row">{[['01', 'Staff'], ['02', 'Parents'], ['03', 'Students']].map(([n, l], i) => <div key={n} className={'glass' + (i === 0 ? ' on' : '')}><span>{n}</span>{l}</div>)}</div>
+            <div className="glass-row">{[['01', t('Staff')], ['02', t('Parents')], ['03', t('Students')]].map(([n, l], i) => <div key={n} className={'glass' + (i === 0 ? ' on' : '')}><span>{n}</span>{l}</div>)}</div>
           </div>
-          <button type="button" className="auth-open" onClick={() => setSheet(true)} aria-haspopup="dialog">Sign in</button>
+          <button type="button" className="auth-open" onClick={() => setSheet(true)} aria-haspopup="dialog">{t('Sign in')}</button>
         </aside>
         <div className="auth-scrim" onClick={() => setSheet(false)} aria-hidden />
         <main className="auth-form" role="dialog" aria-label="Sign in" aria-modal={sheet || undefined}>
           <button type="button" className="auth-grab" onClick={() => setSheet(false)} aria-label="Close sign in"><span /></button>
           <form onSubmit={submit}>
-            <h2>{mfa ? 'Verification code' : 'Sign in to your account'}</h2>
-            <p className="sub">{mfa ? 'Enter the 6-digit code from your authenticator app.' : 'Use the login ID given to you by the school.'}</p>
+            <h2>{mfa ? t('Verification code') : t('Sign in to your account')}</h2>
+            <p className="sub">{mfa ? 'Enter the 6-digit code from your authenticator app.' : t('Use the login ID given to you by the school.')}</p>
             {err && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{err}</div>}
             {!mfa ? <>
-              <div className="field"><label htmlFor="li">Login ID</label><input id="li" type="text" autoComplete="username" required autoFocus={sheet} value={loginId} onChange={(e) => setLoginId(e.target.value)} autoCapitalize="none" placeholder="e.g. name@school.org" /></div>
-              <div className="field"><label htmlFor="pw">Password</label><input id="pw" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" /></div>
+              <div className="field"><label htmlFor="li">{t('Login ID')}</label><input id="li" type="text" autoComplete="username" required autoFocus={sheet} value={loginId} onChange={(e) => setLoginId(e.target.value)} autoCapitalize="none" placeholder="e.g. name@school.org" /></div>
+              <div className="field"><label htmlFor="pw">{t('Password')}</label><input id="pw" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" /></div>
             </> : <div className="field"><label htmlFor="otp">Code</label><input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required autoFocus value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" /></div>}
-            <button className="auth-btn" disabled={busy}>{busy ? 'Signing in…' : mfa ? 'Verify' : 'Sign in'}</button>
-            <p className="hint">Forgotten your password? Ask the school office to reset it.</p>
-            <p className="hint"><a href="/">← Back to the website</a></p>
+            <button className="auth-btn" disabled={busy}>{busy ? t('Signing in…') : mfa ? t('Verify') : t('Sign in')}</button>
+            <p className="hint">{t('Forgotten your password? Ask the school office to reset it.')}</p>
+            <p className="hint"><a href="/">{t('← Back to the website')}</a></p><p className="hint"><LangSwitch className="btn ghost sm" /></p>
           </form>
         </main>
       </div>

@@ -1,3 +1,4 @@
+import { BOARDS, SCALE_LABELS } from '../../lib/grading';
 import { z, ZodTypeAny } from 'zod';
 
 export type FieldType = 'text' | 'longtext' | 'image' | 'file' | 'date' | 'datetime' | 'bool' | 'number' | 'select' | 'tags' | 'ref';
@@ -163,6 +164,10 @@ export const SETTINGS_FIELDS: (Field & { group: string })[] = [
   { group: 'School', name: 'tagline', label: 'Tagline', type: 'text' },
   { group: 'School', name: 'logo_url', label: 'Logo', type: 'image' },
   { group: 'School', name: 'student_id_format', label: 'Student ID format', type: 'text', max: 30, help: 'Use {YYYY} for the admission year and {NNNN} for the running number. Example: {YYYY}-{NNNN} gives 2026-0001. Changing it affects new students only.' },
+  { group: 'Academics', name: 'board', label: 'Board / curriculum', type: 'select', options: BOARDS, help: 'Shown on report cards. Choose the board your school follows.' },
+  { group: 'Academics', name: 'grading_scale', label: 'Grading scale', type: 'select', options: SCALE_LABELS, help: 'How percentages become grades on results and report cards.' },
+  { group: 'Fees', name: 'late_fee_flat', label: 'Late fee per overdue charge (₹)', type: 'text', max: 8, help: 'Leave empty or 0 to switch late fees off. Charged once per overdue fee, after the grace days below.' },
+  { group: 'Fees', name: 'late_fee_grace_days', label: 'Grace days before a late fee', type: 'text', max: 3, help: 'For example 7. Late fees apply only when you press "Apply late fees" in Fees and accounts.' },
   { group: 'Contact', name: 'address', label: 'Address', type: 'longtext', max: 400 },
   { group: 'Contact', name: 'phone', label: 'Phone', type: 'text', max: 40 },
   { group: 'Contact', name: 'email', label: 'Email', type: 'text', max: 120 },

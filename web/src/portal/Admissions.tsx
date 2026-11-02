@@ -6,7 +6,7 @@ import { Modal } from '../components/Modal';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { dt, Pager, Select, useApi, usePaged } from './ui';
 
-const STATUSES = ['submitted', 'under_review', 'documents_pending', 'verified', 'approved', 'enrolled', 'rejected', 'withdrawn'];
+const STATUSES = ['submitted', 'under_review', 'documents_pending', 'verified', 'approved', 'waitlisted', 'enrolled', 'rejected', 'withdrawn'];
 const pretty = (s: string) => s.replace(/_/g, ' ');
 const badge = (s: string) => (['approved', 'enrolled', 'verified'].includes(s) ? 'on' : ['rejected', 'withdrawn'].includes(s) ? 'off' : 'new');
 const KIND: Record<string, string> = { birth_certificate: 'Birth certificate', photo: 'Photo', address_proof: 'Address proof', transfer_certificate: 'Transfer certificate', previous_marksheet: 'Previous marksheet', other: 'Other' };
@@ -38,7 +38,8 @@ export function AdmissionDetail() {
     {edit && !closed && <div className="panel" style={{ marginBottom: '1rem' }}><div className="flex">
       {a.status === 'submitted' && <button className="btn" onClick={() => run(() => post('action', { action: 'start_review' }))}>Start review</button>}
       <button className="btn ghost" onClick={() => { setNote(''); setMerr(''); setModal({ type: 'note', action: 'request_documents', title: 'Ask for documents or changes', need: true }); }}>Request documents</button>
-      {['submitted', 'under_review', 'documents_pending', 'verified'].includes(a.status) && <button className="btn" onClick={() => run(() => post('approve'))}>Approve</button>}
+      {['submitted', 'under_review', 'documents_pending', 'verified'].includes(a.status) && <button className="btn ghost" onClick={() => { setNote(''); setMerr(''); setModal({ type: 'note', action: 'waitlist', title: 'Put on the waiting list', need: true }); }}>Waiting list</button>}
+      {['submitted', 'under_review', 'documents_pending', 'verified', 'waitlisted'].includes(a.status) && <button className="btn" onClick={() => run(() => post('approve'))}>Approve</button>}
       {a.status === 'approved' && <button className="btn" onClick={() => { setMerr(''); setSec(''); setModal({ type: 'enrol' }); }}>Confirm admission and enrol</button>}
       <button className="btn ghost" onClick={() => { setNote(''); setMerr(''); setModal({ type: 'note', action: 'reject', title: 'Reject application', need: true }); }}>Reject</button>
       <button className="btn ghost" onClick={() => { setNote(''); setMerr(''); setModal({ type: 'note', action: 'withdraw', title: 'Mark as withdrawn', need: false }); }}>Withdrawn by family</button></div>

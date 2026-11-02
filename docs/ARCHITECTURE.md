@@ -41,6 +41,7 @@ Super Admin, School Admin, Principal, Department Head, Teacher, Student, Parent,
 | 7 | HR, transport, library, communication, complaints | |
 | 8 | SMS / WhatsApp / email / payment gateway integrations, scheduled reminders | needs provider accounts |
 | 9 | Full security, permission, isolation, performance and UI test pass | Done: every route is checked automatically for sign-in and role guards; every child route is checked for family isolation; uploads, headers, injection and size limits tested; dependency audit clean; database indexes added |
+| 11 | School ecosystem audit and gap fixes: safety, meetings, classwork, development, delivery, reports, privacy export, grading, waiting list, late fees, Hindi, SEO | Done: see docs/AUDIT.md |
 | 10 | Production hardening, monitoring/error tracking, backups, launch checklist | Done: Docker + automatic HTTPS, `/api/ready` health check, graceful shutdown, crash logging, nightly backup and restore scripts, CI, launch checklist |
 
 ## Planned schema (later phases)

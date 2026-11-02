@@ -1,3 +1,4 @@
+import { notifyUsers } from '../../lib/delivery';
 import { NextFunction, Request, Response, Router } from 'express';
 import { PoolClient } from 'pg';
 import { z } from 'zod';
@@ -11,13 +12,12 @@ import { buildReceipt, duesFor } from './fees';
 import { eachDate, isoDow, today } from './helpers';
 
 /** In-app notification to the parents and portal accounts of the students returned by `studentSql`. */
-export async function notifyFamilies(studentSql: string, params: unknown[], title: string, body: string, link: string) {
-  await query(
-    `insert into notifications (user_id, title, body, link)
-     select distinct uid, $${params.length + 1}, $${params.length + 2}, $${params.length + 3} from (
+export async function notifyFamilies(studentSql: string, params: unknown[], title: string, body: string, link: string, category?: string) {
+  const ids = (await query(
+    `select distinct uid from (
        select g.user_id as uid from student_guardians sg join guardians g on g.id=sg.guardian_id where sg.student_id in (${studentSql}) and g.user_id is not null
-       union select s.user_id from students s where s.id in (${studentSql}) and s.user_id is not null) q where uid is not null`,
-    [...params, title, body, link]);
+       union select s.user_id from students s where s.id in (${studentSql}) and s.user_id is not null) q where uid is not null`, params)).rows.map((r) => r.uid as string);
+  await notifyUsers(ids, title, body, link, category);
 }
 
 // ---------- Account issuing (used from the staff side and, later, by the admission workflow) ----------
@@ -171,7 +171,8 @@ familyRouter.get('/children/:id/performance', asyncH(async (req, res) => {
 familyRouter.get('/children/:id/homework', asyncH(async (req, res) => {
   const id = await childOf(req);
   res.json((await query(
-    `select a.id, a.kind, a.title, a.description, to_char(a.due_on,'YYYY-MM-DD') as due_on, a.max_marks::float as max_marks, sub.name as subject, st.full_name as teacher
+    `select a.id, a.kind, a.title, a.description, to_char(a.due_on,'YYYY-MM-DD') as due_on, a.max_marks::float as max_marks, sub.name as subject, st.full_name as teacher,
+            (select x.status from assignment_submissions x where x.assignment_id=a.id and x.student_id=s.id) as submission_status, (select x.marks::float from assignment_submissions x where x.assignment_id=a.id and x.student_id=s.id) as submission_marks
        from assignments a join students s on s.section_id=a.section_id join subjects sub on sub.id=a.subject_id join staff st on st.id=a.staff_id
       where s.id=$1 and a.due_on >= current_date - 14 order by a.due_on, a.id`, [id])).rows);
 }));

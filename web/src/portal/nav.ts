@@ -23,6 +23,14 @@ export function buildNav(can: Can, entities: { key: string; label: string; group
     can('homework.manage') && { to: '/portal/homework', label: 'Homework', hint: 'Set and track work' },
     any(can, 'exams.manage', 'marks.enter', 'results.view_all') && { to: '/portal/exams', label: 'Exams & rankings', hint: 'Marks, results, report cards' },
     can('substitutions.manage') && { to: '/portal/substitutions', label: 'Substitutions', hint: 'Vacant periods' },
+    can('homework.manage') && { to: '/portal/lessons', label: 'Lessons & materials', hint: 'Plans and shared files' },
+    can('meetings.manage') && { to: '/portal/meetings', label: 'Parent meetings', hint: 'Offer and see bookings' },
+    can('growth.manage') && { to: '/portal/support', label: 'Needs support', hint: 'Students to look at closely' },
+  ]);
+  add('safety', 'Safety', 'M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z', [
+    can('safety.gate') && { to: '/portal/safety/gate', label: 'Gate desk', hint: 'Late, early, pickups' },
+    can('safety.pickups.manage') && { to: '/portal/safety/pickups', label: 'Pickup approvals', hint: 'Who may collect a child' },
+    can('incidents.report') && { to: '/portal/safety/incidents', label: 'Incidents', hint: 'Report and handle' },
   ]);
   add('finance', 'Finance', 'M4 7h16v12H4zM4 11h16M8 15h3', [
     any(can, 'fees.view', 'expenses.manage') && { to: '/portal/finance', label: 'Fees & accounts', hint: 'Collect, receipts, reports' },
@@ -47,6 +55,8 @@ export function buildNav(can: Can, entities: { key: string; label: string; group
   ]);
   add('admin', 'Admin', 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z', [
     can('users.manage') && { to: '/portal/users', label: 'Users & roles', hint: 'Accounts and access' },
+    can('reports.view') && { to: '/portal/reports', label: 'Reports', hint: 'Enrolment, workload, safety' },
+    can('notifications.manage') && { to: '/portal/delivery', label: 'Message delivery', hint: 'Email, SMS, WhatsApp log' },
     can('audit.view') && { to: '/portal/audit', label: 'Audit log', hint: 'Who did what' },
   ]);
   return cats;

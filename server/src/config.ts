@@ -12,6 +12,11 @@ const schema = z.object({
   STORAGE_DIR: z.string().default('./storage'),
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
   ALLOW_DEMO_DATA: z.enum(['true', 'false']).optional(), // trial sites only: shows a super-admin button that fills an empty school with fictional data
+  // Message delivery to email / SMS / WhatsApp. 'off' keeps everything in-app. 'webhook' posts each message to a relay you control
+  // (for example one that forwards to your SMS / WhatsApp / email provider); see docs/NOTIFICATIONS.md.
+  NOTIFY_PROVIDER: z.enum(['off', 'webhook']).default('off'),
+  NOTIFY_WEBHOOK_URL: z.string().url().optional(),
+  NOTIFY_WEBHOOK_SECRET: z.string().min(16).optional(),
   DB_POOL_MAX: z.coerce.number().int().positive().default(10), // keep small (2-3) on serverless hosts
   API_RATE_LIMIT: z.coerce.number().int().positive().default(300), // requests per IP per minute across the API
   LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(30), // sign-in attempts per IP per 15 minutes

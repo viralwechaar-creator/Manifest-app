@@ -11,8 +11,8 @@ export const examsRouter = Router();
 const int = z.number().int().positive();
 const idp = (v: string) => z.coerce.number().int().positive().parse(v);
 
-export const GRADES: [number, string][] = [[90, 'A+'], [80, 'A'], [70, 'B'], [60, 'C'], [50, 'D'], [40, 'E'], [0, 'F']];
-export const gradeOf = (pct: number) => GRADES.find(([min]) => pct >= min)![1];
+export { gradeOf } from '../../lib/grading';
+import { activeScale, gradeOf } from '../../lib/grading';
 const r2 = (n: number) => Math.round(n * 100) / 100;
 /** Competition ranking: equal scores share a rank (1, 2, 2, 4). */
 export function rankBy<T>(items: T[], score: (t: T) => number): Map<T, number> {
@@ -216,7 +216,7 @@ export async function buildReport(studentId: number, examId: number) {
   const remark = (await query('select remark from report_remarks where exam_id=$1 and student_id=$2', [examId, studentId])).rows[0]?.remark ?? null;
   const school = (await query("select value from site_settings where key='school_name'")).rows[0]?.value ?? '';
   return { school, exam: { id: exam.id, name: exam.name, kind: exam.kind, year: exam.year, published: exam.results_published }, student: { code: st.student_code, name: st.full_name, section: st.section, dob: st.date_of_birth }, result: row,
-    attendance: { present: att.present, marked: att.marked, percentage: att.marked ? r2((att.present / att.marked) * 100) : null }, remark, gradeScale: GRADES };
+    attendance: { present: att.present, marked: att.marked, percentage: att.marked ? r2((att.present / att.marked) * 100) : null }, remark, gradeScale: activeScale().bands, board: (await query("select value from site_settings where key='board'")).rows[0]?.value || null };
 }
 examsRouter.get('/report/:studentId', anyExamAccess, asyncH(async (req, res) => {
   const studentId = idp(req.params.studentId); const examId = idp(String(req.query.examId));

@@ -1,3 +1,4 @@
+import { deliveryConfigured, processOutbox } from './lib/delivery';
 import { query } from './db';
 import { logger } from './logger';
 import { sendFeeReminders } from './modules/school/fees';
@@ -20,4 +21,6 @@ export function startJobs() {
   const run = () => purgeExpired().then(() => sendFeeReminders()).then(() => sendLibraryReminders()).catch((e) => logger.error({ err: e.message }, 'scheduled job failed'));
   setTimeout(run, 10_000).unref();
   setInterval(run, 6 * 3600_000).unref();
+  // Message delivery (email / SMS / WhatsApp) every 2 minutes, only when a provider is configured.
+  setInterval(() => { if (deliveryConfigured()) processOutbox().catch((e) => logger.error({ err: e.message }, 'message delivery failed')); }, 120_000).unref();
 }

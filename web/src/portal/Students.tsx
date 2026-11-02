@@ -7,6 +7,7 @@ import { Empty, ErrorBox, Loading } from '../components/States';
 import { Tabs } from '../components/Tabs';
 import { dt, Pager, Select, useApi, usePaged } from './ui';
 import { AccessPanel, RemarksPanel } from './Communication';
+import { EmergencyPanel, ExportButton, GrowthPanel } from './StudentExtras';
 
 const STATUS = ['active', 'transferred', 'withdrawn', 'alumni', 'suspended'];
 
@@ -127,7 +128,7 @@ export function StudentForm() {
 export function StudentDetail() {
   const { id } = useParams(); const nav = useNavigate(); const { can } = useAuth();
   const { data: s, err, reload } = useApi<any>(`/admin/school/students/${id}`);
-  const [tab, setTab] = useState<'profile' | 'guardians' | 'history' | 'remarks' | 'access'>('profile');
+  const [tab, setTab] = useState<'profile' | 'guardians' | 'history' | 'remarks' | 'emergency' | 'growth' | 'access'>('profile');
   const [stat, setStat] = useState(false); const [ns, setNs] = useState('withdrawn'); const [reason, setReason] = useState(''); const [serr, setSerr] = useState(''); const [busy, setBusy] = useState(false);
   const age = useMemo(() => (s ? Math.floor((Date.now() - new Date(s.date_of_birth).getTime()) / 31557600000) : 0), [s]);
   if (err) return <><ErrorBox message={err} /><button className="btn ghost" onClick={() => nav('/portal/students')}>← Back</button></>;
@@ -135,9 +136,9 @@ export function StudentDetail() {
   return (
     <>
       <div className="ph1"><div><div className="muted" style={{ fontFamily: 'var(--font-mono)', fontSize: '.8rem' }}>{s.student_code}</div><h1>{s.full_name}</h1></div>
-        <div className="flex"><button className="btn ghost" onClick={() => nav('/portal/students')}>← Students</button>{can('fees.view') && <button className="btn ghost" onClick={() => nav(`/portal/finance/collect?student=${id}`)}>Fees</button>}{can('students.manage') && <><button className="btn ghost" onClick={() => nav(`/portal/students/${id}/edit`)}>Edit</button><button className="btn ghost" onClick={() => { setNs(s.status === 'active' ? 'withdrawn' : 'active'); setStat(true); }}>Change status</button></>}</div></div>
+        <div className="flex"><button className="btn ghost" onClick={() => nav('/portal/students')}>← Students</button>{can('fees.view') && <button className="btn ghost" onClick={() => nav(`/portal/finance/collect?student=${id}`)}>Fees</button>}{can('privacy.export') && <ExportButton studentId={s.id} />}{can('students.manage') && <><button className="btn ghost" onClick={() => nav(`/portal/students/${id}/edit`)}>Edit</button><button className="btn ghost" onClick={() => { setNs(s.status === 'active' ? 'withdrawn' : 'active'); setStat(true); }}>Change status</button></>}</div></div>
       <div className="kpis"><div className="kpi"><b style={{ fontSize: '1.6rem' }}>{s.class_name ? `${s.class_name} ${s.section_name}` : '—'}</b><span>Class</span></div><div className="kpi"><b style={{ fontSize: '1.6rem' }}>{age}</b><span>Age</span></div><div className="kpi"><b style={{ fontSize: '1.6rem' }}><span className={'badge ' + (s.status === 'active' ? 'on' : 'off')}>{s.status}</span></b><span>Status</span></div><div className="kpi"><b style={{ fontSize: '1.6rem' }}>{dt(s.admission_date)}</b><span>Admitted</span></div></div>
-      <Tabs tabs={[{ id: 'profile', label: 'Profile' }, { id: 'guardians', label: 'Parents & guardians' }, { id: 'history', label: 'History' }, { id: 'remarks', label: 'Remarks' }, ...(can('family_accounts.manage') ? [{ id: 'access' as const, label: 'Portal access' }] : [])]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ id: 'profile', label: 'Profile' }, { id: 'guardians', label: 'Parents & guardians' }, { id: 'history', label: 'History' }, { id: 'remarks', label: 'Remarks' }, ...(can('students.sensitive') ? [{ id: 'emergency' as const, label: 'Emergency contacts' }] : []), ...(can('growth.manage') ? [{ id: 'growth' as const, label: 'Growth & activities' }] : []), ...(can('family_accounts.manage') ? [{ id: 'access' as const, label: 'Portal access' }] : [])]} value={tab} onChange={setTab} />
       {tab === 'profile' && <div className="panel"><dl className="kv"><dt>Date of birth</dt><dd>{dt(s.date_of_birth)}</dd><dt>Gender</dt><dd>{s.gender}</dd>
         {'address' in s ? <><dt>Address</dt><dd>{s.address || '—'}</dd><dt>Health notes</dt><dd>{s.health_notes || '—'}</dd></> : <><dt>Address, health</dt><dd className="muted">Hidden: you do not have access to sensitive details.</dd></>}</dl></div>}
       {tab === 'guardians' && <div className="stack">{s.guardians.length === 0 && <Empty>No guardians recorded.</Empty>}{s.guardians.map((g: any) => <div className="panel" key={g.id}><b>{g.full_name}</b> <span className="chip sage">{g.relation}{g.is_primary ? ' · primary' : ''}</span>{g.phone ? <dl className="kv" style={{ marginTop: '.6rem' }}><dt>Phone</dt><dd><a href={`tel:${g.phone}`}>{g.phone}</a></dd>{g.email && <><dt>Email</dt><dd>{g.email}</dd></>}</dl> : <p className="muted" style={{ margin: '.5rem 0 0' }}>Contact details hidden.</p>}</div>)}</div>}
@@ -145,6 +146,8 @@ export function StudentDetail() {
         <div className="panel"><h2>Classes by year</h2>{s.history.length === 0 ? <p className="muted">No class history yet.</p> : <table className="tbl" style={{ minWidth: 0 }}><tbody>{s.history.map((h: any) => <tr key={h.academic_year_id}><td><b>{h.year}</b></td><td>{h.section}</td><td>{h.outcome ?? 'current'}</td></tr>)}</tbody></table>}</div>
         <div className="panel"><h2>Status log</h2><table className="tbl" style={{ minWidth: 0 }}><tbody>{s.statusLog.map((l: any, i: number) => <tr key={i}><td>{dt(l.changed_at)}</td><td><b>{l.new_status}</b></td><td>{l.reason}{l.by ? ` · ${l.by}` : ''}</td></tr>)}</tbody></table></div></div>}
       {tab === 'remarks' && <RemarksPanel studentId={s.id} />}
+      {tab === 'emergency' && <EmergencyPanel studentId={s.id} />}
+      {tab === 'growth' && <GrowthPanel studentId={s.id} />}
       {tab === 'access' && <AccessPanel studentId={s.id} />}
       <Modal open={stat} onClose={() => setStat(false)} label="Change status">
         <h3>Change status</h3>

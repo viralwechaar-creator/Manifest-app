@@ -19,7 +19,15 @@
       "destination": "/api"
     },
     {
-      "source": "/((?!api/|uploads/).*)",
+      "source": "/robots.txt",
+      "destination": "/api"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?!api/|uploads/|robots\\.txt|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
   ],

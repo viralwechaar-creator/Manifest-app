@@ -45,7 +45,7 @@ describe('route guards (every route, automatically)', () => {
   it('gives a staff member with no special rights nothing beyond their own basics', async () => {
     const acc = await session('librarian-x', 'librarian'); const leaked: string[] = [];
     // A librarian may use library, complaints (to raise), own pay/documents and the schema/dashboard basics, nothing else.
-    const MAY = [/^\/api\/admin\/school\/(library|complaints\/mine|exams\/[^/]+\/subjects)/, /^\/api\/admin\/(library|dashboard|notifications|complaints|hr\/me|hr\/payslips|hr\/staff\/[^/]+\/documents|cms\/schema|school\/leave|school\/timetable\/my|school\/staff\/options|school\/(classes|sections|years|subjects|departments|periods)$|school\/fees\/heads)/];
+    const MAY = [/^\/api\/admin\/school\/(library|safety\/incidents|complaints\/mine|exams\/[^/]+\/subjects)/, /^\/api\/admin\/(library|dashboard|notifications|complaints|hr\/me|hr\/payslips|hr\/staff\/[^/]+\/documents|cms\/schema|school\/leave|school\/timetable\/my|school\/staff\/options|school\/(classes|sections|years|subjects|departments|periods)$|school\/fees\/heads)/];
     for (const r of protectedRoutes.filter((x) => x.path.startsWith('/api/admin') && x.method === 'GET')) { const res = await call(acc.a, r); if (res.status === 200 && !MAY.some((p) => p.test(fill(r.path)))) leaked.push(`${r.path} -> 200`); }
     expect(leaked).toEqual([]);
   });
