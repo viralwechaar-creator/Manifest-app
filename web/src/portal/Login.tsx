@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { homeFor, useAuth } from '../auth';
+import { DEFAULT_HERO } from '../lib';
 import { useSettings } from '../site/SiteData';
 import { clearSchemaCache } from './schema';
 
@@ -30,7 +31,7 @@ export function Login() {
     <div className={'auth-page' + (sheet ? ' sheet-open' : '')}>
       <div className="auth-card">
         <aside className="auth-visual">
-          {s.hero_image_url ? <img src={s.hero_image_url} alt="" /> : <div className="auth-glow" aria-hidden><i /></div>}
+          <img src={s.hero_image_url || DEFAULT_HERO} alt="" />
           <div className="auth-shade" aria-hidden />
           <a href="/" className="auth-brand"><span className="brand-mark" style={{ background: '#fff', color: 'var(--forest)' }}>{(s.school_name || 'S')[0]}</span><b>{s.school_name}</b></a>
           <div className="auth-caption">

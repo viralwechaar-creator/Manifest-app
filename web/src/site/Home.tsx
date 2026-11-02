@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Img } from '../components/Img';
 import { Prose } from '../components/Prose';
 import { Reveal } from '../components/Reveal';
-import { fmtDate, parseStats } from '../lib';
+import { DEFAULT_HERO, fmtDate, parseStats } from '../lib';
 import { usePublic, useSettings } from './SiteData';
 
 const QUICK = [
@@ -33,7 +33,7 @@ export function Home() {
     <>
       <section className="fhero" ref={heroRef} aria-label="Welcome">
         <motion.div className="fhero-bg" style={{ y: bgY, scale: bgScale }}>
-          {s.hero_image_url ? <img src={s.hero_image_url} alt="" fetchPriority="high" /> : <div className="fhero-art" aria-hidden><i /><i /><i /></div>}
+          <img src={s.hero_image_url || DEFAULT_HERO} alt="" fetchPriority="high" />
         </motion.div>
         <div className="fhero-shade" aria-hidden />
         <motion.div className="fhero-word" style={{ x: wordX }} aria-hidden>{name}</motion.div>
@@ -72,7 +72,7 @@ export function Home() {
             <Link className="link-arrow" to="/about">Read our story →</Link>
           </div>
         </Reveal>
-        <div className="panel-b"><Img src={about.data?.image_url || s.hero_image_url} alt="" fallback={name[0]} /><span className="vlabel">Campus</span></div>
+        <div className="panel-b"><Img src={about.data?.image_url || s.hero_image_url || DEFAULT_HERO} alt="" fallback={name[0]} /><span className="vlabel">Campus</span></div>
         <nav className="panel-c" aria-label="Quick links">
           <ol>{QUICK.map(([l, to], i) => <li key={to}><Link to={to}><span>{String(i + 1).padStart(2, '0')}</span>{l}</Link></li>)}</ol>
           <div className="mini"><small>Admissions</small><p>{s.admissions_open_text || 'Enquire about joining us.'}</p><Link to="/admissions/enquiry" className="link-arrow" style={{ color: '#fff', borderColor: '#fff' }}>Enquire →</Link></div>

@@ -319,3 +319,6 @@ a.card:hover .img img { transform: scale(1.05); }
 .phead .arc { background: var(--sage-soft); }
 .gstat b, .cta-word, .big-num { color: var(--forest); }
 .cta { background: var(--paper); }
+
+/* On tall phone screens the wide campus photo is cropped; keep the curved brick wall in view. */
+@media (max-width: 700px) { .fhero-bg img, .auth-visual > img { object-position: 70% 55%; } }
