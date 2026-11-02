@@ -233,14 +233,14 @@ a.card:hover .img img { transform: scale(1.05); }
 .fhero-art i:nth-child(3) { width: 52vw; height: 84vw; max-width: 760px; max-height: 1100px; right: -2%; bottom: -30%; }
 @keyframes drift { to { transform: translateY(-3%) scale(1.03); } }
 .fhero-shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(30,35,45,.72) 0%, rgba(30,35,45,.16) 50%, rgba(30,35,45,.32) 100%); }
-.fhero-word { position: absolute; left: 0; top: 17%; white-space: nowrap; font-family: var(--font-display); font-size: clamp(6rem, 22vw, 20rem); line-height: .9; color: rgba(255,255,255,.14); letter-spacing: -.04em; pointer-events: none; padding-left: 4vw; user-select: none; font-weight: 300; }
+.fhero-word { position: absolute; left: 0; top: 17%; white-space: nowrap; font-family: var(--font-display); font-size: clamp(3rem, 8vw, 7rem); line-height: .9; color: rgba(255,255,255,.12); letter-spacing: -.04em; pointer-events: none; padding-left: 4vw; user-select: none; font-weight: 300; }
 .fhero-side { position: absolute; left: clamp(.6rem, 1.6vw, 1.6rem); top: 50%; transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.7); }
 .fhero-copy { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 2rem; align-items: end; padding-bottom: clamp(2rem, 6vh, 4.5rem); }
 .fhero .eyebrow { color: var(--olive); }
-.fhero h1 { font-size: clamp(2.4rem, 6.2vw, 5.6rem); margin-top: 1rem; font-weight: 380; }
+.fhero h1 { font-size: clamp(1.9rem, 3.7vw, 3.3rem); margin-top: .8rem; font-weight: 380; max-width: 18ch; }
 .fhero h1 em { font-style: italic; color: var(--olive); }
 .fhero-actions { display: grid; gap: 1.2rem; justify-items: start; }
-.fhero-actions p { color: rgba(255,255,255,.88); max-width: 42ch; margin: 0; }
+.fhero-actions p { color: rgba(255,255,255,.88); max-width: 40ch; margin: 0; font-size: .95rem; }
 .scrollcue { width: 28px; height: 46px; border: 1px solid rgba(255,255,255,.6); border-radius: 16px; display: grid; justify-items: center; padding-top: 8px; }
 .scrollcue span { width: 3px; height: 9px; border-radius: 2px; background: #fff; animation: cue 1.8s ease-in-out infinite; }
 @keyframes cue { 0% { transform: translateY(0); opacity: 1; } 80% { transform: translateY(14px); opacity: 0; } 100% { opacity: 0; } }
