@@ -118,7 +118,7 @@ function Footer() {
         <div className="ftr-grid">
           <div>
             <div className="big">{s.school_name}</div>
-            <p style={{ color: '#c8d3c6', maxWidth: '34ch' }}>{s.tagline}</p>
+            <p style={{ color: '#d9d0c6', maxWidth: '34ch' }}>{s.tagline}</p>
             {s.address && <p style={{ whiteSpace: 'pre-line', fontSize: '.9rem' }}>{s.address}</p>}
             {s.phone && <a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a>}
             {s.email && <a href={`mailto:${s.email}`}>{s.email}</a>}

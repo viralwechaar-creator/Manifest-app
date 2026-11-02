@@ -30,7 +30,7 @@ function Bars({ data, label, to, reduce }: { data: { label: string; n: number; t
 
 function Donut({ parts, reduce }: { parts: { label: string; n: number }[]; reduce: boolean | null }) {
   const total = parts.reduce((a, p) => a + p.n, 0) || 1; const R = 42, C = 2 * Math.PI * R; let off = 0;
-  const colors = ['#3c7059', '#cfd49f', '#e8d6ac'];
+  const colors = ['#616f84', '#917e71', '#dcd1c7'];
   return (
     <div className="donut"><svg viewBox="0 0 120 120" width="150" height="150" role="img" aria-label={parts.map((p) => `${p.label} ${p.n}`).join(', ')}>
       <circle cx="60" cy="60" r={R} fill="none" stroke="var(--paper-2)" strokeWidth="16" />
@@ -85,7 +85,7 @@ export function Dashboard() {
   return (
     <div className="stack" style={{ gap: '1.1rem' }}>
       <DemoLoader />
-      <section className="dash-hero"><div style={{ position: 'relative', zIndex: 1 }}><div className="eyebrow">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1 style={{ margin: '.5rem 0 0' }}>{greet}, {me!.user.displayName.split(' ')[0]}</h1><p style={{ margin: '.4rem 0 0', color: '#dbe6d6' }}>{attention.length ? `${attention.length} thing${attention.length === 1 ? '' : 's'} need${attention.length === 1 ? 's' : ''} your attention.` : 'Nothing needs your attention right now.'}</p></div>
+      <section className="dash-hero"><div style={{ position: 'relative', zIndex: 1 }}><div className="eyebrow">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1 style={{ margin: '.5rem 0 0' }}>{greet}, {me!.user.displayName.split(' ')[0]}</h1><p style={{ margin: '.4rem 0 0', color: '#e9e2da' }}>{attention.length ? `${attention.length} thing${attention.length === 1 ? '' : 's'} need${attention.length === 1 ? 's' : ''} your attention.` : 'Nothing needs your attention right now.'}</p></div>
         {quick.length > 0 && <div className="quick">{quick.map(([, to, label]) => <Link key={to} to={to}>{label}</Link>)}</div>}</section>
       {attention.length > 0 && <section className="panel"><h2>Needs your attention</h2><div className="attn">{attention.map((k) => <Link key={k} to={(LABELS[k] ?? [])[1] ?? '/portal'} className={SEVERITY[k] ?? ''}><span>{ATTN_TEXT[k]}</span><b>{c[k]}</b></Link>)}</div></section>}
       <div className="bento">

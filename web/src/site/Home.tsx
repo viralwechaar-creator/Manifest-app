@@ -90,8 +90,8 @@ export function Home() {
                 {news.data.map((n, i) => (
                   <Reveal key={n.id} delay={i * 0.06}>
                     <Link to={`/news/${n.id}`} className="row" style={{ borderColor: 'rgba(255,255,255,.2)' }}>
-                      <time style={{ color: '#a9bba5' }}>{fmtDate(n.published_at)}</time>
-                      <div><h3>{n.title}</h3>{n.summary && <p style={{ margin: '.3rem 0 0', color: '#c8d3c6', fontSize: '.92rem' }}>{n.summary}</p>}</div>
+                      <time style={{ color: '#bdb2a7' }}>{fmtDate(n.published_at)}</time>
+                      <div><h3>{n.title}</h3>{n.summary && <p style={{ margin: '.3rem 0 0', color: '#d9d0c6', fontSize: '.92rem' }}>{n.summary}</p>}</div>
                       <span className="chip">{n.kind}</span>
                     </Link>
                   </Reveal>
@@ -105,8 +105,8 @@ export function Home() {
             {events.loading ? <div className="skeleton" style={{ height: 160 }} /> : events.data?.length ? events.data.map((e, i) => (
               <Reveal key={e.id} delay={i * 0.06}>
                 <div className="flex" style={{ padding: '1rem 0', borderBottom: '1px solid rgba(255,255,255,.2)', alignItems: 'center', flexWrap: 'nowrap' }}>
-                  <div className="event-date"><b style={{ color: '#fff' }}>{fmtDate(e.starts_at, { day: 'numeric' })}</b><span style={{ color: '#a9bba5' }}>{fmtDate(e.starts_at, { month: 'short' })}</span></div>
-                  <div><b style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.15rem' }}>{e.title}</b>{e.location && <div style={{ fontSize: '.84rem', color: '#a9bba5' }}>{e.location}</div>}</div>
+                  <div className="event-date"><b style={{ color: '#fff' }}>{fmtDate(e.starts_at, { day: 'numeric' })}</b><span style={{ color: '#bdb2a7' }}>{fmtDate(e.starts_at, { month: 'short' })}</span></div>
+                  <div><b style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.15rem' }}>{e.title}</b>{e.location && <div style={{ fontSize: '.84rem', color: '#bdb2a7' }}>{e.location}</div>}</div>
                 </div>
               </Reveal>
             )) : <p className="muted">No upcoming events.</p>}

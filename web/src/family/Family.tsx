@@ -71,14 +71,14 @@ export function FamilyHome() {
   return (<div className="stack" style={{ gap: '1.1rem' }}>
     <section className="fam-hero"><div className="eyebrow" style={{ color: 'var(--sand)' }}>{role === 'parent' ? `Hello, ${me!.user.displayName.split(' ')[0]}` : 'Welcome back'}</div>
       <h1>{d.student.full_name}</h1><p>{d.student.section ?? 'Class not assigned'} · ID {d.student.student_code}{d.student.class_teacher && <> · Class teacher {d.student.class_teacher}</>}</p>
-      <div className="flex" style={{ marginTop: '.8rem' }}><span className="muted" style={{ color: '#dbe6d6' }}>Today</span>{chip(d.attendance.today)}</div></section>
+      <div className="flex" style={{ marginTop: '.8rem' }}><span className="muted" style={{ color: '#e9e2da' }}>Today</span>{chip(d.attendance.today)}</div></section>
     <div className="fam-tiles">
       <Link to="/family/attendance" className="fam-tile"><span>Attendance, last 30 days</span><b>{a.percentage == null ? '—' : `${Math.round(a.percentage)}%`}</b><small>{a.absent} absent · {a.late} late</small></Link>
       <Link to="/family/homework" className="fam-tile"><span>Homework due</span><b>{d.homeworkDue}</b><small>upcoming</small></Link>
       <Link to="/family/results" className="fam-tile"><span>Latest results</span><b style={{ fontSize: '1.3rem' }}>{d.latestResults ? d.latestResults.name : 'None yet'}</b><small>{d.latestResults ? 'tap to view' : 'published by the school'}</small></Link>
       <Link to="/family/leave" className="fam-tile"><span>Leave requests</span><b>{d.pendingLeave}</b><small>pending</small></Link>
     </div>
-    <div className="panel"><h2>Notices</h2>{!notices.data ? <Loading /> : notices.data.length === 0 ? <p className="muted">No notices right now.</p> : notices.data.slice(0, 3).map((n) => <div key={n.id} className="fam-row"><b>{n.title}</b><span className="muted">{fmtDate(n.published_at)}</span><p style={{ margin: '.2rem 0 0' }}>{n.body.slice(0, 140)}{n.body.length > 140 && '…'}</p></div>)}<Link className="link-arrow" to="/family/notices">All notices & events →</Link></div>
+    <div className="panel"><h2>Notices</h2>{!notices.data ? <Loading /> : notices.data.length === 0 ? <p className="muted">No notices right now.</p> : notices.data.slice(0, 3).map((n) => <div key={n.id} className="fam-row"><div style={{ display: 'flex', justifyContent: 'space-between', gap: '.8rem', flexWrap: 'wrap' }}><b>{n.title}</b><span className="muted">{fmtDate(n.published_at)}</span></div><p style={{ margin: '.2rem 0 0' }}>{n.body.slice(0, 140)}{n.body.length > 140 && '…'}</p></div>)}<Link className="link-arrow" to="/family/notices">All notices & events →</Link></div>
     {events.data && events.data.length > 0 && <div className="panel"><h2>Coming up</h2>{events.data.slice(0, 3).map((e) => <div key={e.id} className="fam-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}><span><b>{e.title}</b><br /><span className="muted" style={{ fontSize: '.82rem' }}>{e.location}</span></span><span className="muted">{fmtDate(e.starts_at, { day: 'numeric', month: 'short' })}</span></div>)}</div>}
     <FeesTile childId={child.id} />
   </div>);
