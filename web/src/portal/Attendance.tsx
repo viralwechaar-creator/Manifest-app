@@ -11,9 +11,14 @@ const lastSchoolDay = () => { const d = new Date(); if (d.getUTCDay() === 0) d.s
 const SSTAT = ['present', 'absent', 'late', 'excused']; const TSTAT = ['present', 'absent', 'late', 'half_day', 'on_leave'];
 
 function Roster({ rows, statuses, value, onChange, disabled }: { rows: any[]; statuses: string[]; value: Record<number, string>; onChange: (id: number, s: string) => void; disabled: boolean }) {
-  return (<div className="tbl-wrap"><table className="tbl"><thead><tr><th>Name</th><th>Status</th></tr></thead><tbody>{rows.map((r) => <tr key={r.id}>
-    <td><b>{r.full_name}</b> <span className="muted" style={{ fontSize: '.8rem' }}>{r.student_code ?? r.staff_code}</span></td>
-    <td><div className="seg" role="radiogroup" aria-label={`Status for ${r.full_name}`}>{statuses.map((s) => <button key={s} role="radio" aria-checked={value[r.id] === s} disabled={disabled} className={'segb ' + s + (value[r.id] === s ? ' on' : '')} onClick={() => onChange(r.id, s)}>{s.replace('_', ' ')}</button>)}</div></td></tr>)}</tbody></table></div>);
+  return (
+    <div className="roster">{rows.map((r) => (
+      <div className="rrow" key={r.id}>
+        <div className="rname"><b>{r.full_name}</b><span>{r.student_code ?? r.staff_code}</span></div>
+        <div className="seg" role="radiogroup" aria-label={`Status for ${r.full_name}`}>{statuses.map((s) => <button key={s} role="radio" aria-checked={value[r.id] === s} disabled={disabled} className={'segb ' + s + (value[r.id] === s ? ' on' : '')} onClick={() => onChange(r.id, s)}>{s.replace('_', ' ')}</button>)}</div>
+      </div>
+    ))}</div>
+  );
 }
 
 export function AttendancePage() {
@@ -37,7 +42,7 @@ function StudentAtt() {
     {!sec ? <Empty>{options.length ? 'Choose a class to mark attendance.' : 'You are not the class teacher of any section. Only class teachers mark attendance.'}</Empty> : !d ? (err ? null : <Loading />) : d.rows.length === 0 ? <Empty>No active students in this class.</Empty> : <>
       <div className="flex" style={{ marginBottom: '.8rem' }}><b>{d.section}</b><span className="muted">{d.rows.length - unmarked} of {d.rows.length} marked</span>{d.canMark && <button className="btn ghost sm" onClick={() => setVals(Object.fromEntries(d.rows.map((r: any) => [r.id, vals[r.id] ?? 'present'])))}>Mark the rest present</button>}</div>
       <Roster rows={d.rows} statuses={SSTAT} value={vals} onChange={(id, s) => setVals({ ...vals, [id]: s })} disabled={!d.canMark} />
-      {d.canMark && <p><button className="btn" disabled={busy || unmarked > 0} onClick={async () => { setBusy(true); setErr(''); setMsg(''); try { const r = await api('/admin/school/attendance/students', { method: 'PUT', body: { sectionId: Number(sec), date, records: d.rows.map((x: any) => ({ studentId: x.id, status: vals[x.id] })) } }); setMsg(`Attendance saved for ${r.saved} students.`); } catch (e) { setErr((e as ApiError).message); } finally { setBusy(false); } }}>{unmarked ? `${unmarked} still to mark` : 'Save attendance'}</button></p>}</>}
+      {d.canMark && <p className="save-row"><button className="btn" disabled={busy || unmarked > 0} onClick={async () => { setBusy(true); setErr(''); setMsg(''); try { const r = await api('/admin/school/attendance/students', { method: 'PUT', body: { sectionId: Number(sec), date, records: d.rows.map((x: any) => ({ studentId: x.id, status: vals[x.id] })) } }); setMsg(`Attendance saved for ${r.saved} students.`); } catch (e) { setErr((e as ApiError).message); } finally { setBusy(false); } }}>{unmarked ? `${unmarked} still to mark` : 'Save attendance'}</button></p>}</>}
   </>);
 }
 
@@ -52,7 +57,7 @@ function StaffAtt() {
     {!d ? <Loading /> : <>
       <div className="flex" style={{ marginBottom: '.8rem' }}><span className="muted">{d.rows.length - todo} of {d.rows.length} marked</span>{d.canMark && <button className="btn ghost sm" onClick={() => setVals(Object.fromEntries(d.rows.map((r: any) => [r.id, vals[r.id] ?? 'present'])))}>Mark the rest present</button>}</div>
       <Roster rows={d.rows} statuses={TSTAT} value={vals} onChange={(id, s) => setVals({ ...vals, [id]: s })} disabled={!d.canMark} />
-      {d.canMark && <p><button className="btn" disabled={todo > 0} onClick={async () => { setMsg(''); try { const r = await api('/admin/school/attendance/staff', { method: 'PUT', body: { date, records: d.rows.map((x: any) => ({ staffId: x.id, status: vals[x.id] })) } }); setMsg(`Saved for ${r.saved} staff. Teachers marked absent will appear under Substitutions if they have classes today.`); } catch (e) { setErr((e as ApiError).message); } }}>{todo ? `${todo} still to mark` : 'Save staff attendance'}</button></p>}</>}
+      {d.canMark && <p className="save-row"><button className="btn" disabled={todo > 0} onClick={async () => { setMsg(''); try { const r = await api('/admin/school/attendance/staff', { method: 'PUT', body: { date, records: d.rows.map((x: any) => ({ staffId: x.id, status: vals[x.id] })) } }); setMsg(`Saved for ${r.saved} staff. Teachers marked absent will appear under Substitutions if they have classes today.`); } catch (e) { setErr((e as ApiError).message); } }}>{todo ? `${todo} still to mark` : 'Save staff attendance'}</button></p>}</>}
   </>);
 }
 

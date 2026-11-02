@@ -1,0 +1,99 @@
+/* =====================================================================================================
+   Layout system: one rhythm for spacing, page headers, toolbars, buttons, tabs, tables and forms.
+   Loaded last, so it refines the older rules. Scale: 4 / 8 / 12 / 16 / 24 / 32 px.
+   ===================================================================================================== */
+:root { --sp-1: .25rem; --sp-2: .5rem; --sp-3: .75rem; --sp-4: 1rem; --sp-5: 1.5rem; --sp-6: 2rem; --touch: 44px; }
+
+/* ---- Top bar: a real surface, so scrolling content never shows through it ---- */
+.shell-top { background: color-mix(in srgb, var(--paper) 90%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); padding-top: max(.7rem, env(safe-area-inset-top)); }
+@media (max-width: 1080px) {
+  .shell-top { border-bottom: 1px solid color-mix(in srgb, var(--line) 75%, transparent); }
+  .shell { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  .fam { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+}
+.shell .pcontent { padding-top: var(--sp-4); }
+
+/* ---- Page header: title on the left, actions on the right (they drop under the title on phones) ---- */
+.ph1 { align-items: center; gap: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-5); }
+.ph1 > .flex { gap: var(--sp-2); }
+@media (max-width: 700px) {
+  .ph1 { margin-bottom: var(--sp-4); }
+  .ph1 h1 { font-size: 1.65rem; }
+  .ph1 > .flex { flex: 1 1 100%; }
+  .ph1 > .flex > .btn { flex: 1 1 auto; }
+  .ph1 > .btn { min-height: 40px; padding: .45rem 1rem; }
+}
+
+/* ---- Toolbars: search on its own row, filters in a tidy two-column grid ---- */
+.toolbar { gap: var(--sp-2); margin-bottom: var(--sp-4); }
+@media (max-width: 700px) {
+  .toolbar { display: grid; grid-template-columns: 1fr 1fr; }
+  .toolbar > *, .toolbar .input, .toolbar .field { max-width: none; width: 100%; min-width: 0; }
+  .toolbar > input:first-child, .toolbar > .input:first-child, .toolbar > .field:first-child:has(input) { grid-column: 1 / -1; }
+  .toolbar > .btn, .toolbar > label, .toolbar > span, .toolbar > p { grid-column: 1 / -1; }
+}
+
+/* ---- Buttons: 44px touch height; main action fills the row on phones ---- */
+.btn { min-height: var(--touch); }
+.btn.sm { min-height: 36px; }
+.flex { gap: var(--sp-2); }
+@media (max-width: 700px) {
+  .pcontent p > .btn:not(.sm):only-child, .fam-main p > .btn:not(.sm):only-child { display: flex; width: 100%; }
+  .pcontent form .flex > .btn:not(.sm), .fam-main form .flex > .btn:not(.sm) { flex: 1 1 auto; }
+  .pager { justify-content: space-between; flex-wrap: wrap; }
+}
+
+/* ---- Tabs: even height, touch-sized, scroll sideways without a visible bar ---- */
+.tabs { gap: var(--sp-1); margin-bottom: var(--sp-4); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { min-height: var(--touch); padding: .55rem var(--sp-4); }
+
+/* ---- Tables: scroll sideways inside their card, with soft edges that show there is more ---- */
+.tbl-wrap {
+  background:
+    linear-gradient(to right, var(--card) 30%, rgba(255,255,255,0)) left center / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--card) 30%, rgba(255,255,255,0)) right center / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(60,66,84,.2), transparent) left center / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(60,66,84,.2), transparent) right center / 12px 100% no-repeat scroll,
+    var(--card);
+  -webkit-overflow-scrolling: touch;
+}
+[data-theme="dark"] .tbl-wrap { background: var(--card); }
+@media (max-width: 700px) { table.tbl { min-width: 520px; } .tbl th, .tbl td { padding: .65rem .8rem; } }
+
+/* ---- Cards and forms: compact on phones so there is less to scroll ---- */
+.shell .two-col, .fam .two-col { gap: .1rem 1.5rem; }
+.two-col > .field { margin-bottom: var(--sp-3); }
+@media (max-width: 700px) {
+  .panel { padding: var(--sp-4); border-radius: 20px; }
+  .panel h2 { font-size: 1.1rem; margin-bottom: var(--sp-3); }
+  .stack { gap: var(--sp-3); }
+  .field { gap: .3rem; margin-bottom: var(--sp-3); }
+  .field > label, .field > .lbl { font-size: .8rem; }
+  .field textarea { min-height: 84px; }
+  /* short fields (dates, dropdowns) sit side by side; names, emails and notes keep the full width */
+  .shell .two-col, .fam .two-col { grid-template-columns: 1fr 1fr; gap: 0 var(--sp-3); }
+  .shell .two-col > .field:has(input:not([type=date]):not([type=time]):not([type=checkbox]):not([type=radio]):not([type=file])),
+  .shell .two-col > .field:has(textarea), .fam .two-col > .field:has(textarea),
+  .fam .two-col > .field:has(input:not([type=date]):not([type=time]):not([type=checkbox]):not([type=radio])) { grid-column: 1 / -1; }
+  .field .help { font-size: .74rem; }
+}
+
+/* ---- Attendance roster: one card per person, status choices in an even grid ---- */
+.roster { border: 1px solid var(--line); border-radius: 20px; background: var(--card); overflow: hidden; }
+.rrow { display: grid; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); border-top: 1px solid var(--line); }
+.rrow:first-child { border-top: 0; }
+.rname { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); min-width: 0; }
+.rname b { overflow: hidden; text-overflow: ellipsis; }
+.rname span { font-size: .78rem; color: var(--grey); font-family: var(--font-mono); white-space: nowrap; }
+.rrow .seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: .4rem; }
+.rrow .segb { min-height: 40px; padding: .3rem .2rem; justify-content: center; text-align: center; }
+@media (min-width: 701px) { .rrow { grid-template-columns: minmax(180px, 1fr) minmax(0, 1.4fr); align-items: center; } }
+.save-row { margin: var(--sp-4) 0 0; }
+@media (max-width: 1080px) { .save-row { position: sticky; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 5; padding: var(--sp-2) 0; background: linear-gradient(to top, var(--paper) 70%, transparent); } }
+
+/* A lone filter on the last row fills it; dropdowns with long choices take the full width of a form row */
+@media (max-width: 700px) {
+  .toolbar > :last-child:nth-child(even) { grid-column: 1 / -1; }
+  .shell .two-col > .field.wide, .fam .two-col > .field.wide { grid-column: 1 / -1; }
+}

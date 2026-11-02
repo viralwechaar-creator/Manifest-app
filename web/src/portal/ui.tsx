@@ -42,7 +42,7 @@ export function useApi<T = any>(path: string | null, deps: unknown[] = [], keep 
 
 export function Select({ label, value, onChange, options, id, blank = 'All', required }: { label?: string; value: any; onChange: (v: string) => void; options: { value: any; label: string }[]; id?: string; blank?: string | null; required?: boolean }) {
   return (
-    <div className="field" style={label ? undefined : { margin: 0 }}>
+    <div className={'field' + (options.some((o) => String(o.label).length > 14) ? ' wide' : '')} style={label ? undefined : { margin: 0 }}>
       {label && <label htmlFor={id}>{label}{required && ' *'}</label>}
       <select id={id} className="input" aria-label={label ?? blank ?? 'Select'} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         {blank !== null && <option value="">{blank}</option>}

@@ -3,6 +3,10 @@
 import { createApp } from '../server/src/app';
 import { migrate } from '../server/src/migrate';
 
+// Log (never crash on) stray errors, so one bad request cannot take down requests that are still being served.
+process.on('unhandledRejection', (e) => console.error('unhandled rejection', e instanceof Error ? e.message : e));
+process.on('uncaughtException', (e) => console.error('uncaught exception', e.message));
+
 const app = createApp();
 let ready: Promise<void> | null = null;
 

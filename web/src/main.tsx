@@ -12,6 +12,7 @@ import { SettingsProvider } from './site/SiteData';
 import './styles/base.css';
 import './styles/site.css';
 import './styles/portal.css';
+import './styles/layout.css';
 
 // After a new version is published, an open tab may ask for a page file that no longer exists. Reload once to pick up the new version.
 window.addEventListener('vite:preloadError', () => {

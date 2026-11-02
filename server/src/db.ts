@@ -1,7 +1,12 @@
 import { Pool, PoolClient, QueryResultRow } from 'pg';
 import { config } from './config';
+import { logger } from './logger';
 
 export const pool = new Pool({ connectionString: config.DATABASE_URL, max: config.DB_POOL_MAX, idleTimeoutMillis: 10000 });
+
+// A pooler or the database can close an idle connection at any time. Without this handler Node treats that as a crash
+// of the whole process, which on a serverless host cuts off requests that are in flight.
+pool.on('error', (err) => logger.warn({ err: { message: err.message } }, 'idle database connection closed'));
 
 export async function query<T extends QueryResultRow = any>(text: string, params: unknown[] = []) {
   return pool.query<T>(text, params as any[]);
