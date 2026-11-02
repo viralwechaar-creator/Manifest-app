@@ -291,3 +291,20 @@ button, a { -webkit-tap-highlight-color: transparent; }
 [data-theme="dark"] .skeleton { background: linear-gradient(100deg, var(--paper-2) 30%, var(--card) 50%, var(--paper-2) 70%); }
 [data-theme="dark"] .shell { background-image: radial-gradient(60% 40% at 90% -10%, #1c2b23, transparent 70%); }
 [data-theme="dark"] .tabs button.on, [data-theme="dark"] .fam-tab.active, [data-theme="dark"] .bb.active { color: #fff; }
+
+/* Sign-in illustration is a light picture: white top, purple books below. Dark text on top, white text over the books. */
+.auth-visual.light { background: #fff; }
+.auth-visual.light > img { object-position: center bottom; }
+.auth-visual.light .auth-shade { background: linear-gradient(to top, rgba(46, 38, 92, .62), rgba(46, 38, 92, 0) 46%); }
+.auth-visual.light .auth-brand { color: var(--forest); }
+.auth-visual.light .auth-brand .brand-mark { background: var(--forest) !important; color: #fff !important; }
+@media (max-width: 860px) {
+  .auth-visual.light { justify-content: flex-start; padding-top: clamp(3.5rem, 12vh, 6rem); }
+  .auth-visual.light .auth-caption { display: none; }
+}
+@media (min-width: 861px) {
+  /* Desktop: books reach the top of the panel, so use white text with a soft shade at the top as well. */
+  .auth-visual.light .auth-shade { background: linear-gradient(to bottom, rgba(46, 38, 92, .55), rgba(46, 38, 92, 0) 24%), linear-gradient(to top, rgba(46, 38, 92, .62), rgba(46, 38, 92, 0) 46%); }
+  .auth-visual.light .auth-brand { color: #fff; }
+  .auth-visual.light .auth-brand .brand-mark { background: #fff !important; color: var(--forest) !important; }
+}
