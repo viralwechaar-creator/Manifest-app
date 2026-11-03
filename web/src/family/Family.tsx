@@ -70,7 +70,8 @@ export function FamilyHome() {
   const o = useApi<any>(`/family/children/${child.id}/overview`, [child.id]); const notices = useApi<any[]>('/family/notices'); const events = useApi<any[]>('/family/events');
   if (o.err) return <ErrorBox message={o.err} />; if (!o.data) return <Loading />;
   const d = o.data; const a = d.attendance.last30;
-  return (<div className="stack" style={{ gap: '1.1rem' }}>
+  return (<div className="stack fam-home">
+    <div className="fam-split"><div className="stack">
     <section className="fam-hero"><div className="eyebrow" style={{ color: 'var(--sand)' }}>{role === 'parent' ? `Hello, ${me!.user.displayName.split(' ')[0]}` : 'Welcome back'}</div>
       <h1>{d.student.full_name}</h1><p>{d.student.section ?? 'Class not assigned'} · ID {d.student.student_code}{d.student.class_teacher && <> · Class teacher {d.student.class_teacher}</>}</p>
       <div className="flex" style={{ marginTop: '.8rem' }}><span className="muted" style={{ color: '#e9e2da' }}>Today</span>{chip(d.attendance.today)}</div></section>
@@ -80,9 +81,11 @@ export function FamilyHome() {
       <Link to="/family/results" className="fam-tile"><span>Latest results</span><b style={{ fontSize: '1.3rem' }}>{d.latestResults ? d.latestResults.name : 'None yet'}</b><small>{d.latestResults ? 'tap to view' : 'published by the school'}</small></Link>
       <Link to="/family/leave" className="fam-tile"><span>Leave requests</span><b>{d.pendingLeave}</b><small>pending</small></Link>
     </div>
+    </div><div className="stack">
     <div className="panel"><h2>Notices</h2>{!notices.data ? <Loading /> : notices.data.length === 0 ? <p className="muted">No notices right now.</p> : notices.data.slice(0, 3).map((n) => <div key={n.id} className="fam-row"><div style={{ display: 'flex', justifyContent: 'space-between', gap: '.8rem', flexWrap: 'wrap' }}><b>{n.title}</b><span className="muted">{fmtDate(n.published_at)}</span></div><p style={{ margin: '.2rem 0 0' }}>{n.body.slice(0, 140)}{n.body.length > 140 && '…'}</p></div>)}<Link className="link-arrow" to="/family/notices">All notices & events →</Link></div>
     {events.data && events.data.length > 0 && <div className="panel"><h2>Coming up</h2>{events.data.slice(0, 3).map((e) => <div key={e.id} className="fam-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}><span><b>{e.title}</b><br /><span className="muted" style={{ fontSize: '.82rem' }}>{e.location}</span></span><span className="muted">{fmtDate(e.starts_at, { day: 'numeric', month: 'short' })}</span></div>)}</div>}
     <FeesTile childId={child.id} />
+    </div></div>
   </div>);
 }
 
@@ -92,22 +95,29 @@ export function FamilyAttendance() {
   const shift = (n: number) => { const [y, m] = month.split('-').map(Number); setMonth(new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7)); };
   const cells = useMemo(() => { const [y, m] = month.split('-').map(Number); const lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; const n = new Date(Date.UTC(y, m, 0)).getUTCDate(); return [...Array(lead).fill(null), ...Array.from({ length: n }, (_, i) => `${month}-${String(i + 1).padStart(2, '0')}`)]; }, [month]);
   const by = new Map<string, string>((data?.days ?? []).map((d: any) => [d.date, d.status]));
+  const T = data?.totals ?? {}; const yr = data?.year;
+  const summary = (<div className="panel soft fam-att-side"><h2>This month</h2>
+      <div className="fam-stats">{['present', 'absent', 'late', 'excused'].map((s) => <div key={s} className="fam-stat"><b>{T[s] ?? 0}</b><span className={'fchip ' + s}>{s}</span></div>)}</div>
+      <h2 style={{ marginTop: '1.4rem' }}>This academic year</h2>
+      {yr?.percentage != null ? <><p style={{ margin: '.2rem 0 .6rem' }}><b style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', fontWeight: 400 }}>{yr.percentage}%</b> present or late</p><div className="meter" style={{ height: 10 }}><i style={{ width: `${Math.min(100, yr.percentage)}%` }} /></div><p className="muted" style={{ fontSize: '.85rem', margin: '.6rem 0 0' }}>{yr.present} of {yr.marked} school days marked.</p></> : <p className="muted">No attendance has been marked this year yet.</p>}
+      <p className="muted" style={{ fontSize: '.8rem', marginTop: '1.2rem' }}>Days without a colour are holidays, Sundays or not yet marked.</p></div>);
   return (<div className="stack"><h1 className="fam-h">Attendance</h1>{err && <ErrorBox message={err} />}
+    <div className="fam-split fam-att">
     <div className="panel"><div className="flex" style={{ justifyContent: 'space-between', marginBottom: '.8rem' }}><button className="btn ghost sm" onClick={() => shift(-1)} aria-label="Previous month">←</button><b style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem' }}>{fmtDate(month + '-01', { month: 'long', year: 'numeric' })}</b><button className="btn ghost sm" onClick={() => shift(1)} aria-label="Next month">→</button></div>
       <div className="fam-cal" role="group" aria-label="Attendance calendar">{['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <div key={i} className="dow" aria-hidden>{d}</div>)}{cells.map((d, i) => d ? <div key={i} className={'fday ' + (by.get(d) ?? '')} role="img" aria-label={`${d}: ${by.get(d) ?? 'not marked'}`} title={`${d}: ${by.get(d) ?? 'not marked'}`}><span aria-hidden>{+d.slice(8)}</span></div> : <div key={i} aria-hidden />)}</div>
-      <div className="flex" style={{ marginTop: '1rem', gap: '.5rem' }}>{['present', 'absent', 'late', 'excused'].map((s) => <span key={s} className={'fchip ' + s}>{s} {data?.totals[s] ?? 0}</span>)}</div></div>
-    {data?.year.percentage != null && <div className="panel soft"><b>This academic year</b><p style={{ margin: '.3rem 0 0' }}>{data.year.percentage}% present or late ({data.year.present} of {data.year.marked} school days marked)</p></div>}</div>);
+</div>
+    {summary}</div></div>);
 }
 
 function ResultDetail({ examId, onBack }: { examId: number; onBack: () => void }) {
   const { child } = useChild(); const { data: r, err } = useApi<any>(`/family/children/${child.id}/report/${examId}`, [examId, child.id]);
   if (err) return <ErrorBox message={err} />; if (!r) return <Loading />; const x = r.result;
   return (<div className="stack"><div className="flex noprint"><button className="btn ghost sm" onClick={onBack}>← All results</button><button className="btn sm" onClick={() => window.print()}>Print / save PDF</button></div>
-    <div className="panel rc"><div className="eyebrow">{r.school}</div><h2 style={{ fontSize: '1.8rem', margin: '.4rem 0' }}>{r.exam.name}</h2><p className="muted">{r.student.name} · {r.student.section} · {r.exam.year}</p>
+    <div className="panel rc"><div className="rc-grid"><div><div className="eyebrow">{r.school}{r.board ? ` · ${r.board}` : ''}</div><h2 style={{ fontSize: '1.8rem', margin: '.4rem 0' }}>{r.exam.name}</h2><p className="muted">{r.student.name} · {r.student.section} · {r.exam.year}</p>
       <div className="fam-subjects">{x.subjects.map((s: any) => <div key={s.examSubjectId} className="fsub"><div className="flex" style={{ justifyContent: 'space-between' }}><b>{s.subject}</b><span>{s.pending ? '—' : s.absent ? 'Absent' : <b>{s.marks}</b>}<span className="muted"> / {s.max}</span></span></div><div className="meter"><i style={{ width: `${s.pending || s.absent ? 0 : ((s.marks ?? 0) / s.max) * 100}%` }} /></div><small className="muted">{s.grade && `Grade ${s.grade}`}{s.rank ? ` · ${ordinal(s.rank)} in class` : ''}</small></div>)}</div>
-      <div className="rc-total"><div><span>Total</span><b>{x.complete ? `${x.total}/${x.maxTotal}` : '—'}</b></div><div><span>Percentage</span><b>{x.complete ? `${x.percentage}%` : '—'}</b></div><div><span>Grade</span><b>{x.grade ?? '—'}</b></div><div><span>Class rank</span><b>{x.classRank ? `${ordinal(x.classRank)} of ${x.classSize}` : '—'}</b></div><div><span>Section rank</span><b>{x.sectionRank ? `${ordinal(x.sectionRank)} of ${x.sectionSize}` : '—'}</b></div><div><span>Result</span><b>{x.passed == null ? '—' : x.passed ? 'Pass' : 'Needs support'}</b></div></div>
+      </div><div className="rc-side"><div className="rc-total"><div><span>Total</span><b>{x.complete ? `${x.total}/${x.maxTotal}` : '—'}</b></div><div><span>Percentage</span><b>{x.complete ? `${x.percentage}%` : '—'}</b></div><div><span>Grade</span><b>{x.grade ?? '—'}</b></div><div><span>Class rank</span><b>{x.classRank ? `${ordinal(x.classRank)} of ${x.classSize}` : '—'}</b></div><div><span>Section rank</span><b>{x.sectionRank ? `${ordinal(x.sectionRank)} of ${x.sectionSize}` : '—'}</b></div><div><span>Result</span><b>{x.passed == null ? '—' : x.passed ? 'Pass' : 'Needs support'}</b></div></div>
       <div style={{ marginTop: '1rem' }}><b>Class teacher's remark</b><p style={{ margin: '.3rem 0 0' }}>{r.remark ?? <span className="muted">No remark yet.</span>}</p></div>
-      <p className="muted" style={{ fontSize: '.75rem', marginTop: '1rem' }}>Attendance this year: {r.attendance.percentage == null ? 'not recorded' : `${r.attendance.percentage}%`}. Grades: {r.gradeScale.map(([m, g]: [number, string]) => `${g} ≥ ${m}%`).join(' · ')}</p></div></div>);
+      <p className="muted" style={{ fontSize: '.75rem', marginTop: '1rem' }}>Attendance this year: {r.attendance.percentage == null ? 'not recorded' : `${r.attendance.percentage}%`}. Grades: {r.gradeScale.map(([m, g]: [number, string]) => `${g} ≥ ${m}%`).join(' · ')}</p></div></div></div></div>);
 }
 
 export function FamilyResults() {
@@ -115,8 +125,8 @@ export function FamilyResults() {
   const res = useApi<any[]>(`/family/children/${child.id}/results`, [child.id]); const perf = useApi<any>(`/family/children/${child.id}/performance`, [child.id]);
   useEffect(() => setOpen(null), [child.id]);
   if (open) return <ResultDetail examId={open} onBack={() => setOpen(null)} />;
-  return (<div className="stack"><h1 className="fam-h">Results</h1><Tabs tabs={[{ id: 'exams', label: 'Exams & tests' }, { id: 'subjects', label: 'Subject performance' }]} value={tab} onChange={setTab} />
-    {tab === 'exams' && (res.err ? <ErrorBox message={res.err} /> : !res.data ? <Loading /> : res.data.length === 0 ? <Empty>No results have been published yet.</Empty> : <div className="stack" style={{ gap: '.7rem' }}>{res.data.map((e) => <button key={e.examId} className="fam-result" onClick={() => setOpen(e.examId)}>
+  return (<div className="stack fam-res"><h1 className="fam-h">Results</h1><Tabs tabs={[{ id: 'exams', label: 'Exams & tests' }, { id: 'subjects', label: 'Subject performance' }]} value={tab} onChange={setTab} />
+    {tab === 'exams' && (res.err ? <ErrorBox message={res.err} /> : !res.data ? <Loading /> : res.data.length === 0 ? <Empty>No results have been published yet.</Empty> : <div className="stack fam-cards">{res.data.map((e) => <button key={e.examId} className="fam-result" onClick={() => setOpen(e.examId)}>
       <span className="ring" style={{ ['--p' as any]: e.complete ? e.percentage : 0 }}><b>{e.complete ? `${Math.round(e.percentage)}%` : '—'}</b></span>
       <span style={{ flex: 1, textAlign: 'left' }}><b>{e.name}</b><br /><span className="muted" style={{ fontSize: '.85rem' }}>{e.complete ? `${e.total}/${e.maxTotal} · Grade ${e.grade}` : 'Some subjects pending'}</span></span>
       {e.classRank && <span className="rankpill">{ordinal(e.classRank)}<small>of {e.classSize}</small></span>}</button>)}</div>)}
@@ -178,13 +188,16 @@ export function FamilyFees() {
   if (err) return <ErrorBox message={err} />; if (!data) return <Loading />;
   const tot = data.totals; const need = ['cheque', 'upi', 'bank_transfer', 'card', 'online'].includes(f.mode);
   return (<div className="stack"><h1 className="fam-h">Fees</h1>
+    <div className="fam-split"><div className="stack">
     <div className="fam-hero"><div className="eyebrow" style={{ color: 'var(--sand)' }}>{child.full_name}</div><h1 style={{ fontSize: '2.6rem' }}>{inr(tot.balance)}</h1><p>{tot.balance > 0 ? 'to pay' : 'nothing to pay'}{tot.overdue > 0 && <> · <b>{inr(tot.overdue)} overdue</b></>}</p></div>
     {ok && <div className="notice ok" role="status">Thank you. The school will confirm your payment and issue a receipt.</div>}
     {role === 'parent' && tot.balance > 0 && <button className="btn" onClick={() => { setFerr(null); setOk(false); setF({ amount: String(tot.balance), mode: 'upi', reference: '', paidOn: t, note: '' }); setOpen(true); }}>I have paid</button>}
     <div className="panel soft"><h2>How to pay</h2><p style={{ margin: 0, whiteSpace: 'pre-line' }}>{data.instructions || 'Please contact the school office for payment options.'}</p><p className="muted" style={{ fontSize: '.82rem', margin: '.6rem 0 0' }}>You can pay in any way the school accepts. After paying, tap “I have paid” so we can match it and send your receipt.</p></div>
-    <div className="panel"><h2>Fees</h2>{data.dues.length === 0 ? <p className="muted">No fees have been raised yet.</p> : data.dues.map((d: any) => <div className="fam-row" key={d.id}><div className="flex" style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}><span><b>{d.description}</b><br /><span className={d.overdue ? 'err' : 'muted'} style={{ fontSize: '.82rem' }}>due {fmtDate(d.dueOn)}{d.overdue ? ' · overdue' : ''}</span></span><span style={{ textAlign: 'right' }}>{d.balance > 0 ? <b>{inr(d.balance)}</b> : <span className="badge on">paid</span>}{d.adjustments < 0 && <div className="muted" style={{ fontSize: '.75rem' }}>discount {inr(-d.adjustments)}</div>}</span></div></div>)}</div>
     {data.claims.some((c: any) => c.status !== 'accepted') && <div className="panel"><h2>Payments you told us about</h2>{data.claims.filter((c: any) => c.status !== 'accepted').map((c: any) => <div className="fam-row" key={c.id}><div className="flex" style={{ justifyContent: 'space-between' }}><span><b>{inr(c.amount)}</b> <span className="muted">{MODE[c.mode]} · {fmtDate(c.paid_on)}</span></span><span className={'badge ' + (c.status === 'pending' ? 'new' : 'off')}>{c.status === 'pending' ? 'being checked' : 'not matched'}</span></div>{c.decision_note && <span className="muted" style={{ fontSize: '.82rem' }}>{c.decision_note}</span>}</div>)}</div>}
     <div className="panel"><h2>Receipts</h2>{data.payments.length === 0 ? <p className="muted">No payments yet.</p> : data.payments.map((p: any) => <button key={p.id} className="fam-row" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', background: 'none', border: 0, borderTop: '1px solid var(--line)', textAlign: 'left', cursor: 'pointer' }} onClick={() => setRc(p.id)}><span><b>{inr(p.amount)}</b> <span className="muted">{MODE[p.mode]} · {fmtDate(p.paid_on)}</span></span><code>{p.receipt_no}</code></button>)}</div>
+    </div><div className="stack">
+    <div className="panel"><h2>Fees</h2>{data.dues.length === 0 ? <p className="muted">No fees have been raised yet.</p> : data.dues.map((d: any) => <div className="fam-row" key={d.id}><div className="flex" style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}><span><b>{d.description}</b><br /><span className={d.overdue ? 'err' : 'muted'} style={{ fontSize: '.82rem' }}>due {fmtDate(d.dueOn)}{d.overdue ? ' · overdue' : ''}</span></span><span style={{ textAlign: 'right' }}>{d.balance > 0 ? <b>{inr(d.balance)}</b> : <span className="badge on">paid</span>}{d.adjustments < 0 && <div className="muted" style={{ fontSize: '.75rem' }}>discount {inr(-d.adjustments)}</div>}</span></div></div>)}</div>
+    </div></div>
     <Modal open={rc !== null} onClose={() => setRc(null)} label="Receipt">{rc !== null && <Receipt path={`/family/children/${child.id}/receipts/${rc}`} />}</Modal>
     <Modal open={open} onClose={() => setOpen(false)} label="I have paid"><h3>Tell us about your payment</h3><p className="muted" style={{ fontSize: '.88rem' }}>Paid online, at the office, by cheque or transfer? Enter the details and the school will confirm.</p>{ferr && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{ferr.message}</div>}
       <div className="two-col"><div className="field"><label htmlFor="cl1">Amount (₹)</label><input id="cl1" type="number" step="0.01" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></div><div className="field"><label htmlFor="cl2">Paid by</label><select id="cl2" value={f.mode} onChange={(e) => setF({ ...f, mode: e.target.value })}>{Object.entries(MODE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>

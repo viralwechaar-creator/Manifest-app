@@ -20,6 +20,19 @@ export function FinancePage() {
     {tab === 'collect' && <Collect />}{tab === 'payments' && <Payments />}{tab === 'claims' && <Claims />}{tab === 'refunds' && <Refunds />}{tab === 'structure' && <Structure />}{tab === 'expenses' && <Expenses />}{tab === 'reports' && <Reports />}</>);
 }
 
+/** What the Collect tab shows before a student is chosen: how to start, and the latest receipts, so the page is never blank. */
+function CollectHome() {
+  const recent = usePaged<any>('/admin/school/fees/payments', { page: 1 });
+  return (
+    <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))' }}>
+      <div className="panel"><h2>Record a payment</h2><ol style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: 1.8 }}><li>Search for the student above by name or ID.</li><li>Choose the fees being paid, or enter an amount.</li><li>Pick how they paid. A numbered receipt is issued and the family is told.</li></ol>
+        <p className="muted" style={{ fontSize: '.85rem', marginTop: '1rem' }}>Parents can also tell the school about a payment from their own portal. Those appear under “To confirm”.</p></div>
+      <div className="panel"><h2>Latest receipts</h2>
+        {recent.err ? <ErrorBox message={recent.err} /> : recent.loading ? <Loading /> : recent.rows.length === 0 ? <p className="muted">No payments recorded yet.</p> : <table className="tbl" style={{ minWidth: 0 }}><tbody>{recent.rows.slice(0, 8).map((p: any) => <tr key={p.id}><td><code>{p.receipt_no}</code><br /><span className="muted" style={{ fontSize: '.78rem' }}>{dt(p.paid_on)}</span></td><td><b>{p.full_name}</b><br /><span className="muted" style={{ fontSize: '.78rem' }}>{MODE[p.mode]}</span></td><td style={{ textAlign: 'right' }}><b>{inr(p.amount)}</b></td></tr>)}</tbody></table>}</div>
+    </div>
+  );
+}
+
 function Collect() {
   const { can } = useAuth(); const [sp, setSp] = useSearchParams(); const sid = sp.get('student');
   const [q, setQ] = useState(''); const found = useApi<any>(q.trim().length >= 2 ? `/admin/school/students${qs({ q })}` : null, [q], true);
@@ -34,7 +47,7 @@ function Collect() {
   return (<>
     <div className="toolbar"><input className="input" style={{ maxWidth: 360 }} type="search" placeholder="Find a student by name or ID" aria-label="Find a student" value={q} onChange={(e) => setQ(e.target.value)} /></div>
     {found.data && q.trim().length >= 2 && <div className="panel" style={{ marginBottom: '1rem' }}>{found.data.rows.length === 0 ? <span className="muted">No student found.</span> : found.data.rows.slice(0, 8).map((s: any) => <button key={s.id} className="fam-link" style={{ marginBottom: '.4rem' }} onClick={() => { setSp({ student: String(s.id) }); setQ(''); }}><span><b>{s.full_name}</b> <span className="muted">{s.student_code} · {s.class_name ? `${s.class_name} ${s.section_name}` : 'no class'}</span></span><span aria-hidden>→</span></button>)}</div>}
-    {!sid ? <Empty>Search for a student to see their fees and record a payment.</Empty> : d.err ? <ErrorBox message={d.err} /> : !d.data ? <Loading /> : <>
+    {!sid ? <CollectHome /> : d.err ? <ErrorBox message={d.err} /> : !d.data ? <Loading /> : <>
       <div className="ph1" style={{ marginBottom: '.8rem' }}><div><h2 style={{ fontSize: '1.8rem' }}>{d.data.student.full_name}</h2><span className="muted">{d.data.student.student_code} · {d.data.student.section ?? 'no class'}</span></div>
         <div className="flex">{can('fees.concession') && <button className="btn ghost" onClick={() => { setAerr(''); setCon({ headId: '', yearId: years.data?.find((y) => y.is_current)?.id ?? '', kind: 'percent', value: '', reason: '', applyToExisting: true }); }}>Add concession</button>}{can('fees.collect') && <button className="btn" disabled={d.data.totals.balance <= 0} onClick={() => { setErr(''); setF({ amount: String(d.data.totals.balance), mode: 'cash', reference: '', paidOn: today(), note: '' }); setPick([]); setPay(true); }}>Record payment</button>}</div></div>
       <div className="kpis"><div className="kpi"><b>{inr(d.data.totals.balance)}</b><span>Balance</span></div><div className="kpi"><b style={{ color: d.data.totals.overdue ? 'var(--danger)' : undefined }}>{inr(d.data.totals.overdue)}</b><span>Overdue</span></div><div className="kpi"><b>{inr(d.data.totals.paid)}</b><span>Paid so far</span></div></div>

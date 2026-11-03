@@ -1,0 +1,85 @@
+/* =====================================================================================================
+   Desktop layout (1024px and wider): use the whole screen in balanced halves instead of one narrow column.
+   Phones and small tablets keep the single-column layout; nothing here applies below 1024px.
+   ===================================================================================================== */
+.fam-split { display: grid; gap: 1.1rem; }
+.rc-grid { display: block; }
+.fam-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; }
+.fam-stat { text-align: center; padding: .7rem .2rem; background: var(--card); border: 1px solid var(--line); border-radius: 16px; display: grid; gap: .35rem; justify-items: center; }
+.fam-stat b { font-family: var(--font-display); font-weight: 300; font-size: 1.9rem; line-height: 1; color: var(--forest); }
+
+@media (min-width: 1024px) {
+  /* ---- Parent and student portal ---- */
+  .fam-main { max-width: min(1360px, 100%); padding: 5rem clamp(2rem, 4vw, 3.5rem) 3rem; }
+  .fam-main > .stack { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: stretch; align-content: start; }
+  .fam-main > .stack > .fam-h, .fam-main > .stack > .fam-hero, .fam-main > .stack > .notice, .fam-main > .stack > .flex, .fam-main > .stack > p,
+  .fam-main > .stack > .tabs, .fam-main > .stack > .fam-split, .fam-main > .stack > .grid-2, .fam-main > .stack > .ph1, .fam-main > .stack > .noprint, .fam-main > .stack > .empty { grid-column: 1 / -1; }
+  .fam-main > .stack > :last-child:nth-child(even) { grid-column: 1 / -1; }   /* a lone last card fills the row */
+  .fam-split { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  .fam-split > .stack { align-content: start; gap: 1.1rem; }
+  .fam-home .fam-hero { min-height: 220px; display: flex; flex-direction: column; justify-content: center; }
+  .fam-home .fam-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fam-att { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: stretch; }
+  .fam-att-side { display: flex; flex-direction: column; }
+  .fam-cal { gap: 8px; }
+  .fam-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .fam-res > .fam-cards { grid-column: 1 / -1; }
+  .rc-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
+  .rc-side { position: sticky; top: 5.2rem; }
+  .rc-side .rc-total { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fam-main .tbl-wrap { grid-column: 1 / -1; }
+
+  /* ---- Staff portal ---- */
+  .shell .pcontent { max-width: min(1600px, 100%); }
+  .pcontent form.stack[style*="max-width"] { max-width: none !important; }
+  .pcontent form.stack { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); align-items: start; }
+  .pcontent form.stack > .notice, .pcontent form.stack > .flex, .pcontent form.stack > p, .pcontent form.stack > .ph1 { grid-column: 1 / -1; }
+}
+@media (min-width: 1500px) {
+  .fam-main { padding-left: 4rem; padding-right: 4rem; }
+}
+
+@media (min-width: 1024px) {
+  .fam-cards > :last-child:nth-child(odd) { grid-column: 1 / -1; }   /* an odd last card fills the row */
+  .fam-main > .stack > .fam-tiles { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
+@media (min-width: 1024px) {
+  /* Staff forms that were capped at a narrow width now use the full width, with fields in two columns */
+  .pcontent .panel[style*="max-width: 780px"], .pcontent .stack[style*="max-width: 760px"] { max-width: none !important; }
+  .dyn-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2rem; align-items: start; }
+  .dyn-form > .notice, .dyn-form > .flex, .dyn-form > .field:has(textarea), .dyn-form > .field:has(input[type=file]), .dyn-form > .field:has(button) { grid-column: 1 / -1; }
+  .pcontent .stack[style*="max-width: 760px"] { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .pcontent .stack[style*="max-width: 760px"] > .notice { grid-column: 1 / -1; }
+}
+
+@media (min-width: 1024px) {
+  .dash-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 1.1rem; align-items: start; }
+  .dash-top > .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-top > .bento:only-child { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .pcontent .stack[style*="max-width: 760px"] > .panel:only-child { grid-column: 1 / -1; }
+}
+@media (max-width: 1023px) { .dash-top { display: grid; gap: 1.1rem; } }
+@media (min-width: 1024px) {
+  .dash-top { align-items: stretch; }
+  .dash-top > .bento { align-items: stretch; }
+  .dash-top > .bento > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .dash-top > .bento > :last-child:nth-child(odd) .group-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* ---- Refinement pass: alignment, nav fit, equal column ends (desktop only) ---- */
+@media (min-width: 1081px) {
+  .shell-top { padding-inline: max(var(--pad), calc((100vw - 1600px) / 2 + var(--pad))); }
+  .pillnav { flex: 0 1 auto; min-width: 0; }
+  .pn { padding: .5rem .7rem; font-size: .85rem; }
+  .pn-in { gap: .35rem; }
+  .subnav { max-width: none; padding-inline: max(var(--pad), calc((100vw - 1600px) / 2 + var(--pad))); }
+  .toolbar { align-items: stretch; }
+  .toolbar > .input, .toolbar > select, .toolbar > .field { min-height: 48px; box-sizing: border-box; }
+}
+@media (min-width: 1024px) {
+  .fam-top { padding-inline: max(clamp(2rem, 4vw, 3.5rem), calc((100vw - 1360px) / 2 + 3.5rem)); }
+  .fam-home.stack > .fam-split { align-items: stretch; }
+  .fam-home .fam-split > .stack { display: flex; flex-direction: column; }
+  .fam-home .fam-split > .stack > .fam-tiles { align-content: stretch; }
+  .fam-home .fam-split > .stack > :last-child:not(.fam-hero) { flex: 1; }
+}

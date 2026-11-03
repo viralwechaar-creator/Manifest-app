@@ -83,15 +83,17 @@ export function Dashboard() {
   const max = Math.max(1, ...d.enquiryTrend.map((x: any) => x.count)); const total = d.enquiryTrend.reduce((a: number, x: any) => a + x.count, 0);
   const hour = new Date().getHours(); const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   return (
-    <div className="stack" style={{ gap: '1.1rem' }}>
+    <div className="stack dash" style={{ gap: '1.1rem' }}>
       <DemoLoader />
       <section className="dash-hero"><div style={{ position: 'relative', zIndex: 1 }}><div className="eyebrow">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1 style={{ margin: '.5rem 0 0' }}>{greet}, {me!.user.displayName.split(' ')[0]}</h1><p style={{ margin: '.4rem 0 0', color: '#e9e2da' }}>{attention.length ? `${attention.length} thing${attention.length === 1 ? '' : 's'} need${attention.length === 1 ? 's' : ''} your attention.` : 'Nothing needs your attention right now.'}</p></div>
         {quick.length > 0 && <div className="quick">{quick.map(([, to, label]) => <Link key={to} to={to}>{label}</Link>)}</div>}</section>
+      <div className="dash-top">
       {attention.length > 0 && <section className="panel"><h2>Needs your attention</h2><div className="attn">{attention.map((k) => <Link key={k} to={(LABELS[k] ?? [])[1] ?? '/portal'} className={SEVERITY[k] ?? ''}><span>{ATTN_TEXT[k]}</span><b>{c[k]}</b></Link>)}</div></section>}
       <div className="bento">
         {GROUPS.map((g) => { const keys = g.keys.filter((k) => c[k] !== undefined); if (!keys.length) return null; return (
           <section className="panel group-card" key={g.title}><h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={g.icon} /></svg>{g.title}</h2>
             <div className="group-kpis">{keys.map((k) => { const [l, to] = LABELS[k] ?? [k]; const inner = <><b>{val(k)}</b><span>{l}</span></>; return to ? <Link key={k} to={to} className="gk">{inner}</Link> : <div key={k} className="gk">{inner}</div>; })}</div></section>); })}
+      </div>
       </div>
       <div className="bento">
         {sc.studentsByClass && <div className="panel"><h2>Students by class</h2><p className="muted" style={{ fontSize: '.8rem', marginTop: '-.5rem' }}>Select a class to see its students.</p><Bars reduce={reduce} label="Students by class" data={sc.studentsByClass.map((x: any) => ({ label: x.name, n: x.n, to: `/portal/students?class_id=${x.class_id}&status=active` }))} /></div>}

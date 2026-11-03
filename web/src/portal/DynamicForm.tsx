@@ -70,7 +70,7 @@ export function DynamicForm({ fields, initial, onSubmit, onCancel, submitLabel =
   }
 
   return (
-    <form onSubmit={submit} noValidate>
+    <form onSubmit={submit} noValidate className="dyn-form">
       {err && <div className="notice error" role="alert" style={{ marginBottom: '1rem' }}>{err.message}</div>}
       {fields.map((f) => {
         const id = 'pf-' + f.name; const e = err?.fields?.[f.name];
